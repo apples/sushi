@@ -1,0 +1,8 @@
+[submodule "lodepng"]
+	path = lodepng
+	url = https://github.com/dbralir/lodepng
+	branch = cmake
+[submodule "glad"]
+	path = glad
+	url = https://github.com/dbralir/glad
+	branch = cmake

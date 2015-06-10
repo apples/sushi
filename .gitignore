@@ -1,0 +1,9 @@
+*/
+!src
+!test
+!glad
+!lodepng
+!include
+!.gitignore
+!.gitmodules
+!CmakeLists.txt
