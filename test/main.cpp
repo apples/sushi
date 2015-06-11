@@ -16,10 +16,40 @@
 #include <algorithm>
 #include <iterator>
 #include <memory>
+#include <sstream>
 
 using namespace std;
 
+using glm::vec2;
+using glm::vec3;
+
 namespace sushi {
+
+namespace constants {
+    struct attrib_location {
+        static constexpr auto POSITION = 0;
+        static constexpr auto TEXCOORD = 1;
+        static constexpr auto NORMAL = 2;
+    };
+
+    struct attrib_name {
+        static constexpr auto POSITION = "VertexPosition";
+        static constexpr auto TEXCOORD = "VertexTexCoord";
+        static constexpr auto NORMAL = "VertexNormal";
+    };
+
+    struct common_uniform {
+        static constexpr auto PROJ_MAT = "ProjectionMat";
+        static constexpr auto VIEW_MAT = "ViewMat";
+        static constexpr auto MODEL_MAT = "ModelMat";
+        static constexpr auto MVP_MAT = "MVP";
+    };
+
+    struct shader_type {
+        static constexpr auto VERTEX = GL_VERTEX_SHADER;
+        static constexpr auto FRAGMENT = GL_FRAGMENT_SHADER;
+    };
+}
 
 class glfw_init_token {
     static int refs;
@@ -238,11 +268,11 @@ inline unique_texture make_unique_texture() {
 
 struct static_mesh {
     unique_vertex_array vao;
-    unique_buffer vertices;
+    unique_buffer vertex_buffer;
     int num_triangles = 0;
 };
 
-inline vector<string> load_file(const string &fname) {
+inline vector<string> load_file(const string& fname) {
     ifstream file(fname);
     string line;
     vector<string> rv;
@@ -253,14 +283,260 @@ inline vector<string> load_file(const string &fname) {
     return rv;
 }
 
+static_mesh load_static_mesh(const string& fname) {
+    ifstream file (fname);
+    string line;
+    string word;
+    int line_number = 0;
 
+    vector<vec3> vertices;
+    vector<vec3> normals;
+    vector<vec2> texcoords;
+
+    vector<GLfloat> data;
+    int num_tris = 0;
+
+    while (getline(file,line)) {
+        ++line_number;
+        istringstream iss (line);
+        iss >> word;
+
+        if (word == "v") {
+            vec3 v;
+            iss >> v.x >> v.y >> v.z;
+            vertices.push_back(v);
+        } else if (word == "vn") {
+            vec3 v;
+            iss >> v.x >> v.y >> v.z;
+            normals.push_back(v);
+        } else if (word == "vt") {
+            vec2 v;
+            iss >> v.x >> v.y;
+            texcoords.push_back(v);
+        } else if (word == "f") {
+            int index;
+            for (int i=0; i<3; ++i) {
+                iss >> word;
+                replace(begin(word),end(word),'/',' ');
+                istringstream iss2 (word);
+                iss2 >> index;
+                data.push_back(vertices[index].x);
+                data.push_back(vertices[index].y);
+                data.push_back(vertices[index].z);
+                iss2 >> index;
+                data.push_back(texcoords[index].x);
+                data.push_back(texcoords[index].y);
+                iss2 >> index;
+                data.push_back(normals[index].x);
+                data.push_back(normals[index].y);
+                data.push_back(normals[index].z);
+            }
+            ++num_tris;
+        } else {
+            clog << "sushi::load_static_mesh(): Warning: Unknown OBJ directive at " << fname << "[" << line_number
+                 << "]: \"" << word << "\"." << endl;
+        }
+    }
+
+    static_mesh rv;
+
+    rv.vao = make_unique_vertex_array();
+    rv.vertex_buffer = make_unique_buffer();
+    rv.num_triangles = num_tris;
+
+    glBindBuffer(GL_ARRAY_BUFFER, rv.vertex_buffer.get());
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data[0], GL_STATIC_DRAW);
+
+    glBindVertexArray(rv.vao.get());
+
+    auto stride = sizeof(GLfloat) * (3 + 2 + 3);
+    glEnableVertexAttribArray(constants::attrib_location::POSITION);
+    glEnableVertexAttribArray(constants::attrib_location::TEXCOORD);
+    glEnableVertexAttribArray(constants::attrib_location::NORMAL);
+    glVertexAttribPointer(constants::attrib_location::POSITION, 3, GL_FLOAT, GL_FALSE, stride,
+                          reinterpret_cast<const GLvoid *>(0));
+    glVertexAttribPointer(constants::attrib_location::TEXCOORD, 2, GL_FLOAT, GL_FALSE, stride,
+                          reinterpret_cast<const GLvoid *>(sizeof(GLfloat) * 3));
+    glVertexAttribPointer(constants::attrib_location::NORMAL, 3, GL_FLOAT, GL_FALSE, stride,
+                          reinterpret_cast<const GLvoid *>(sizeof(GLfloat) * (3 + 2)));
+
+    return rv;
+}
+
+struct shader_deleter {
+    using pointer = fake_nullable<GLuint>;
+    void operator()(pointer p) const {
+        GLuint shader = p;
+        glDeleteShader(shader);
+    }
+};
+
+struct program_deleter {
+    using pointer = fake_nullable<GLuint>;
+    void operator()(pointer p) const {
+        GLuint program = p;
+        glDeleteProgram(program);
+    }
+};
+
+using unique_shader = unique_gl_resource<shader_deleter>;
+using unique_program = unique_gl_resource<program_deleter>;
+
+inline unique_shader make_unique_shader(GLenum shader_type) {
+    GLuint shader = glCreateShader(shader_type);
+    if (shader == 0) {
+        throw runtime_error("Failed to create shader!");
+    }
+    return unique_shader(shader);
+}
+
+inline unique_program make_unique_program() {
+    GLuint program = glCreateProgram();
+    if (program == 0) {
+        throw runtime_error("Failed to create shader program!");
+    }
+    return unique_program(program);
+}
+
+inline unique_shader compile_shader_file(GLenum shader_type, const string& fname) {
+    auto lines = load_file(fname);
+
+    vector<const GLchar*> line_pointers;
+    line_pointers.reserve(lines.size());
+    transform(begin(lines),end(lines),back_inserter(line_pointers),[](auto& line){return line.data();});
+
+    unique_shader rv = make_unique_shader(shader_type);
+
+    glShaderSource(rv.get(), line_pointers.size(), &line_pointers[0], nullptr);
+
+    glCompileShader(rv.get());
+
+    GLint result;
+    glGetShaderiv(rv.get(), GL_COMPILE_STATUS, &result);
+    if (result == GL_FALSE) {
+        ostringstream oss;
+
+        oss << "Shader compilation failed!" << endl;
+
+        GLint log_length;
+        glGetShaderiv(rv.get(), GL_INFO_LOG_LENGTH, &log_length);
+
+        if (log_length > 0) {
+            auto log = make_unique<GLchar[]>(log_length);
+            glGetShaderInfoLog(rv.get(), log_length, nullptr, log.get());
+
+            oss << "Shader compilation log:\n" << log.get() << endl;
+        }
+
+        throw runtime_error(oss.str());
+    }
+
+    return rv;
+}
+
+template <typename T>
+class const_reference_wrapper {
+    const T* ptr = nullptr;
+public:
+    const_reference_wrapper() = default;
+    const_reference_wrapper(const T& t) : ptr(&t) {}
+    const T& get() const { return *ptr; }
+};
+
+inline unique_program link_program(const vector<const_reference_wrapper<unique_shader>>& shaders) {
+    unique_program rv = make_unique_program();
+
+    for (const auto& shader : shaders) {
+        glAttachShader(rv.get(), shader.get().get());
+    }
+
+    glLinkProgram(rv.get());
+
+    GLint result;
+    glGetProgramiv(rv.get(), GL_LINK_STATUS, &result);
+    if (result == GL_FALSE) {
+        ostringstream oss;
+
+        oss << "Program compilation failed!" << endl;
+
+        GLint log_length;
+        glGetProgramiv(rv.get(), GL_INFO_LOG_LENGTH, &log_length);
+
+        if (log_length > 0) {
+            auto log = make_unique<GLchar[]>(log_length);
+            glGetProgramInfoLog(rv.get(), log_length, nullptr, log.get());
+
+            oss << "Program compilation log:\n" << log.get() << endl;
+        }
+
+        throw runtime_error(oss.str());
+    }
+
+    return rv;
+}
+
+struct texture_2d {
+    unique_texture handle;
+    int width = 0;
+    int height = 0;
+};
+
+texture_2d load_texture_2d(const string& fname, bool smooth, bool wrap) {
+    std::vector<unsigned char> image;
+    unsigned width, height;
+    auto error = lodepng::decode(image, width, height, fname);
+
+    texture_2d rv;
+
+    if (error != 0) {
+        clog << "sushi::load_texture_2d: Warning: Unable to load texture \"" << fname << "\"." << endl;
+        return rv;
+    }
+
+    rv.handle = make_unique_texture();
+    rv.width = width;
+    rv.height = height;
+
+    glBindTexture(GL_TEXTURE_2D, rv.handle.get());
+
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (smooth? GL_LINEAR : GL_NEAREST));
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (smooth? GL_LINEAR : GL_NEAREST));
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+
+    return rv;
+}
+
+inline void set_program(const unique_program& program) {
+    glUseProgram(program.get());
+}
+
+inline void set_texture(int slot, const texture_2d& tex) {
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D, tex.handle.get());
+}
+
+inline void draw_mesh(const static_mesh& mesh) {
+    glBindVertexArray(mesh.vao.get());
+    glDrawArrays(GL_TRIANGLES, 0, mesh.num_triangles * 3);
+}
 
 } // namespace sushi
 
 int main() {
+    namespace sc = sushi::constants;
+
     auto window = sushi::window(800, 600, "Sushi Test", false);
 
-    window.main_loop([&]{
+    auto texture = sushi::load_texture_2d("assets/test.png", false, false);
+    auto mesh = sushi::load_static_mesh("assets/test.obj");
+    auto program = sushi::link_program({
+        sushi::compile_shader_file(sc::shader_type::VERTEX, "assets/vert.glsl"),
+        sushi::compile_shader_file(sc::shader_type::FRAGMENT, "assets/frag.glsl"),
+    });
 
+    window.main_loop([&]{
+        sushi::set_program(program);
+        sushi::set_texture(0, texture);
+        sushi::draw_mesh(mesh);
     });
 }
