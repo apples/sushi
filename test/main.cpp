@@ -3,6 +3,9 @@
 
 #include <glm/glm.hpp>
 
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <lodepng.h>
 
 #include <stdexcept>
@@ -312,6 +315,7 @@ static_mesh load_static_mesh(const string& fname) {
         } else if (word == "vt") {
             vec2 v;
             iss >> v.x >> v.y;
+            v.y = 1.0-v.y;
             texcoords.push_back(v);
         } else if (word == "f") {
             int index;
@@ -320,13 +324,16 @@ static_mesh load_static_mesh(const string& fname) {
                 replace(begin(word),end(word),'/',' ');
                 istringstream iss2 (word);
                 iss2 >> index;
+                --index;
                 data.push_back(vertices[index].x);
                 data.push_back(vertices[index].y);
                 data.push_back(vertices[index].z);
                 iss2 >> index;
+                --index;
                 data.push_back(texcoords[index].x);
                 data.push_back(texcoords[index].y);
                 iss2 >> index;
+                --index;
                 data.push_back(normals[index].x);
                 data.push_back(normals[index].y);
                 data.push_back(normals[index].z);
@@ -520,6 +527,14 @@ inline void draw_mesh(const static_mesh& mesh) {
     glDrawArrays(GL_TRIANGLES, 0, mesh.num_triangles * 3);
 }
 
+inline void set_uniform(const unique_program& program, const string& name, glm::mat4 mat) {
+    glUniformMatrix4fv(glGetUniformLocation(program.get(), name.data()), 1, GL_FALSE, glm::value_ptr(mat));
+}
+
+inline void set_uniform(const unique_program& program, const string& name, GLint i) {
+    glUniform1i(glGetUniformLocation(program.get(), name.data()), i);
+}
+
 } // namespace sushi
 
 int main() {
@@ -534,8 +549,27 @@ int main() {
         sushi::compile_shader_file(sc::shader_type::FRAGMENT, "assets/frag.glsl"),
     });
 
+    auto xrot = 0.f;
+    auto yrot = 0.f;
+
     window.main_loop([&]{
         sushi::set_program(program);
+
+        auto proj_mat = glm::perspective(90.f, 4.f/3.f, 0.01f, 100.f);
+        auto view_mat = glm::translate(glm::mat4(1.f), glm::vec3{0.f,0.f,-5.f});
+        auto model_mat = glm::mat4(1.f);
+
+        model_mat = glm::rotate(model_mat, xrot, glm::vec3{1,0,0});
+        model_mat = glm::rotate(model_mat, yrot, glm::vec3{0,1,0});
+
+        xrot += 0.0001;
+        yrot += 0.001;
+
+        auto mvp = proj_mat * view_mat * model_mat;
+
+        sushi::set_uniform(program, sc::common_uniform::MVP_MAT, mvp);
+        sushi::set_uniform(program, "DiffuseTexture", 0);
+
         sushi::set_texture(0, texture);
         sushi::draw_mesh(mesh);
     });
