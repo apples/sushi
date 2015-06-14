@@ -170,8 +170,8 @@ public:
         }
 
         glfwWindowHint(GLFW_SAMPLES, 4);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+        glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -528,11 +528,11 @@ inline void draw_mesh(const static_mesh& mesh) {
 }
 
 inline void set_uniform(const unique_program& program, const string& name, glm::mat4 mat) {
-    glUniformMatrix4fv(glGetUniformLocation(program.get(), name.data()), 1, GL_FALSE, glm::value_ptr(mat));
+    glProgramUniformMatrix4fv(program.get(), glGetUniformLocation(program.get(), name.data()), 1, GL_FALSE, glm::value_ptr(mat));
 }
 
 inline void set_uniform(const unique_program& program, const string& name, GLint i) {
-    glUniform1i(glGetUniformLocation(program.get(), name.data()), i);
+    glProgramUniform1i(program.get(), glGetUniformLocation(program.get(), name.data()), i);
 }
 
 } // namespace sushi
