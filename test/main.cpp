@@ -8,6 +8,7 @@
 
 #include <lodepng.h>
 
+#include <cstdlib>
 #include <stdexcept>
 #include <vector>
 #include <tuple>
@@ -80,24 +81,52 @@ struct glfw_window_deleter {
 };
 using glfw_window_ptr = unique_ptr<GLFWwindow,glfw_window_deleter>;
 
+enum class input_type {
+    UNKNOWN,
+    KEYBOARD,
+    MOUSE_BUTTON
+};
+
+struct input_button {
+    input_type type = input_type::UNKNOWN;
+    int value;
+    input_button() = default;
+    explicit input_button(input_type type, int value) : type(type), value(value) {}
+};
+
 template <int NKeys>
 class key_array {
-    struct key {
+    struct keystate {
         int when_last_pressed = 0;
         int when_last_released = 0;
     };
-    array<key,NKeys> keys;
+    array<keystate,NKeys> keystates;
 public:
     void press(int k, int t) {
-        keys[k].when_last_pressed = t;
+        keystates[k].when_last_pressed = t;
     }
 
     void release(int k, int t) {
-        keys[k].when_last_released = t;
+        keystates[k].when_last_released = t;
     }
 
-    bool was_pressed(int k) {
-        return false; // TODO
+    bool was_pressed(int k, int t) {
+        auto ks = keystates[k];
+        return t < ks.when_last_pressed;
+    }
+
+    bool was_released(int k, int t) {
+        auto ks = keystates[k];
+        return t < ks.when_last_released;
+    }
+
+    bool is_down(int k) {
+        auto ks = keystates[k];
+        return ks.when_last_released < ks.when_last_pressed;
+    }
+
+    bool is_up(int k) {
+        return !is_down(k);
     }
 };
 
@@ -113,8 +142,14 @@ class window {
     key_array<GLFW_MOUSE_BUTTON_LAST+1> mouse_buttons;
     glm::vec2 mouse_pos;
     glm::vec2 scroll_offset;
+
+    /// UTF-32 string that the user has typed during this frame.
     vector<unsigned> char_buffer;
 
+    /// End of last tick cycle; beginning of current tick cycle.
+    int last_tick = 0;
+
+    /// End of current tick cycle; beginning of next tick cycle.
     int current_tick = 0;
 
     static void char_cb(GLFWwindow* w, unsigned codepoint) {
@@ -133,6 +168,8 @@ class window {
             return;
         }
 
+        ++self.current_tick;
+
         switch (action) {
             case GLFW_PRESS:
                 self.keyboard_keys.press(key, self.current_tick);
@@ -145,6 +182,9 @@ class window {
 
     static void mouse_button_cb(GLFWwindow* w, int button, int action, int mods) {
         window& self = *static_cast<window*>(glfwGetWindowUserPointer(w));
+
+        ++self.current_tick;
+
         switch (action) {
             case GLFW_PRESS:
                 self.mouse_buttons.press(button, self.current_tick);
@@ -201,11 +241,52 @@ public:
 
     void main_loop(function<void()> func) {
         while (!glfwWindowShouldClose(handle.get())) {
+            last_tick = current_tick;
             glfwPollEvents();
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             func();
             glfwSwapBuffers(handle.get());
         }
+    }
+
+    template <typename Func>
+    auto apply_key_array(input_type t, Func&& func) {
+        switch (t) {
+            case input_type::KEYBOARD:
+                return func(keyboard_keys);
+            case input_type::MOUSE_BUTTON:
+                return func(mouse_buttons);
+            default:
+                throw; // TODO
+        }
+    }
+
+    bool was_pressed(input_button b) {
+        auto func = [&](auto& ka){
+            return ka.was_pressed(b.value, last_tick);
+        };
+        return apply_key_array(b.type,func);
+    }
+
+    bool was_released(input_button b) {
+        auto func = [&](auto& ka){
+            return ka.was_released(b.value, last_tick);
+        };
+        return apply_key_array(b.type,func);
+    }
+
+    bool is_down(input_button b) {
+        auto func = [&](auto& ka){
+            return ka.is_down(b.value);
+        };
+        return apply_key_array(b.type,func);
+    }
+
+    bool is_up(input_button b) {
+        auto func = [&](auto& ka){
+            return ka.is_up(b.value);
+        };
+        return apply_key_array(b.type,func);
     }
 };
 
@@ -339,6 +420,8 @@ static_mesh load_static_mesh(const string& fname) {
                 data.push_back(normals[index].z);
             }
             ++num_tris;
+        } else if (word[0] == '#') {
+            // pass
         } else {
             clog << "sushi::load_static_mesh(): Warning: Unknown OBJ directive at " << fname << "[" << line_number
                  << "]: \"" << word << "\"." << endl;
@@ -527,6 +610,12 @@ inline void draw_mesh(const static_mesh& mesh) {
     glDrawArrays(GL_TRIANGLES, 0, mesh.num_triangles * 3);
 }
 
+
+template <typename T>
+void set_uniform(const unique_program& program, const string& name, const T& data) {
+    throw; // TODO
+}
+
 inline void set_uniform(const unique_program& program, const string& name, glm::mat4 mat) {
     glProgramUniformMatrix4fv(program.get(), glGetUniformLocation(program.get(), name.data()), 1, GL_FALSE, glm::value_ptr(mat));
 }
@@ -537,7 +626,7 @@ inline void set_uniform(const unique_program& program, const string& name, GLint
 
 } // namespace sushi
 
-int main() {
+int main() try {
     namespace sc = sushi::constants;
 
     auto window = sushi::window(800, 600, "Sushi Test", false);
@@ -567,10 +656,27 @@ int main() {
 
         auto mvp = proj_mat * view_mat * model_mat;
 
-        sushi::set_uniform(program, sc::common_uniform::MVP_MAT, mvp);
+        sushi::set_uniform(program, "MVP", mvp);
         sushi::set_uniform(program, "DiffuseTexture", 0);
+
+        auto key_A = sushi::input_button(sushi::input_type::KEYBOARD,GLFW_KEY_A);
+
+        if (window.was_pressed(key_A)) {
+            clog << "A pressed." << endl;
+        }
+
+        if (window.was_released(key_A)) {
+            clog << "A released." << endl;
+        }
+
+        sushi::set_uniform(program, "GrayScale", int(window.is_down(sushi::input_button(sushi::input_type::KEYBOARD,GLFW_KEY_A))));
 
         sushi::set_texture(0, texture);
         sushi::draw_mesh(mesh);
     });
+
+    return EXIT_SUCCESS;
+} catch (const exception& e) {
+    cerr << "ERROR: " << e.what() << endl;
+    return EXIT_FAILURE;
 }
