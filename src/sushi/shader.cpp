@@ -18,16 +18,10 @@
 /// Sushi
 namespace sushi {
 
-unique_shader compile_shader_file(shader_type type, const std::string& fname) {
-    auto lines = load_file(fname);
-
-    std::vector<const GLchar*> line_pointers;
-    line_pointers.reserve(lines.size());
-    std::transform(begin(lines), end(lines), std::back_inserter(line_pointers), [](auto& line) { return line.data(); });
-
+unique_shader compile_shader(shader_type type, std::vector<const GLchar*> code) {
     unique_shader rv = make_unique_shader(GLenum(type));
 
-    glShaderSource(rv.get(), line_pointers.size(), &line_pointers[0], nullptr);
+    glShaderSource(rv.get(), code.size(), &code[0], nullptr);
 
     glCompileShader(rv.get());
 
@@ -52,6 +46,16 @@ unique_shader compile_shader_file(shader_type type, const std::string& fname) {
     }
 
     return rv;
+}
+
+unique_shader compile_shader_file(shader_type type, const std::string& fname) {
+    auto lines = load_file(fname);
+
+    std::vector<const GLchar *> line_pointers;
+    line_pointers.reserve(lines.size());
+    std::transform(begin(lines), end(lines), std::back_inserter(line_pointers), [](auto &line) { return line.data(); });
+
+    return compile_shader(type, line_pointers);
 }
 
 unique_program link_program(const std::vector<const_reference_wrapper<unique_shader>>& shaders) {
