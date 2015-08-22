@@ -133,6 +133,10 @@ void window::main_loop(std::function<void()> func) {
     }
 }
 
+void window::stop_loop() {
+    glfwSetWindowShouldClose(handle.get(), true);
+}
+
 bool window::was_pressed(input_button b) const {
     auto func = [&](const auto& ka) {
         return ka.was_pressed(b.value, last_tick);

@@ -121,6 +121,10 @@ public:
     /// \param func Function to call once per frame.
     void main_loop(std::function<void()> func);
 
+    /// Stops the main loop and flags the window to be closed.
+    /// \pre `main_loop` is running.
+    void stop_loop();
+
     /// Checks if a button was pressed this frame.
     /// \pre `b.type` is not `UNKNOWN`.
     /// \param b Button to check.
