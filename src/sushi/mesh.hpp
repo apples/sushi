@@ -77,7 +77,20 @@ struct attrib_location {
 /// - `f` - Face (triangles only).
 /// \param fname File name.
 /// \return The static mesh described by the file.
-static_mesh load_static_mesh(const std::string& fname);
+static_mesh load_static_mesh_file(const std::string &fname);
+
+struct Tri {
+    using Index3 = std::vector<glm::vec3>::size_type;
+    using Index2 = std::vector<glm::vec2>::size_type;
+    struct Vert {
+        Index3 pos;
+        Index3 norm;
+        Index2 tex;
+    };
+    Vert verts[3];
+};
+
+static_mesh load_static_mesh_data(const std::vector<glm::vec3>& positions, const std::vector<glm::vec3>& normals, const std::vector<glm::vec2>& texcoords, const std::vector<Tri>& tris);
 
 /// Draws a mesh.
 /// \param mesh The mesh to draw.

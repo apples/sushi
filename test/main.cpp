@@ -13,7 +13,7 @@ int main() try {
     auto window = sushi::window(800, 600, "Sushi Test", false);
 
     auto texture = sushi::load_texture_2d("assets/test.png", false, false);
-    auto mesh = sushi::load_static_mesh("assets/test.obj");
+    auto mesh = sushi::load_static_mesh_file("assets/test.obj");
     auto program = sushi::link_program({
                                                sushi::compile_shader_file(sushi::shader_type::VERTEX,
                                                                           "assets/vert.glsl"),
