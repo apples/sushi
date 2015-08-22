@@ -68,6 +68,12 @@ inline unique_program make_unique_program() {
     return unique_program(program);
 }
 
+/// Loads and compiles an OpenGL shader from an array of strings.
+/// \param type The type of shader to be created.
+/// \param code Shader source.
+/// \return A unique shader object.
+unique_shader compile_shader(shader_type type, std::vector<const GLchar*> code);
+
 /// Loads and compiles an OpenGL shader from a file.
 /// \param type The type of shader to be created.
 /// \param fname File name.

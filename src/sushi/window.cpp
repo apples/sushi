@@ -133,29 +133,29 @@ void window::main_loop(std::function<void()> func) {
     }
 }
 
-bool window::was_pressed(input_button b) {
-    auto func = [&](auto& ka) {
+bool window::was_pressed(input_button b) const {
+    auto func = [&](const auto& ka) {
         return ka.was_pressed(b.value, last_tick);
     };
     return apply_key_array(b.type, func, keyboard_keys, mouse_buttons);
 }
 
-bool window::was_released(input_button b) {
-    auto func = [&](auto& ka) {
+bool window::was_released(input_button b) const {
+    auto func = [&](const auto& ka) {
         return ka.was_released(b.value, last_tick);
     };
     return apply_key_array(b.type, func, keyboard_keys, mouse_buttons);
 }
 
-bool window::is_down(input_button b) {
-    auto func = [&](auto& ka) {
+bool window::is_down(input_button b) const {
+    auto func = [&](const auto& ka) {
         return ka.is_down(b.value);
     };
     return apply_key_array(b.type, func, keyboard_keys, mouse_buttons);
 }
 
-bool window::is_up(input_button b) {
-    auto func = [&](auto& ka) {
+bool window::is_up(input_button b) const {
+    auto func = [&](const auto& ka) {
         return ka.is_up(b.value);
     };
     return apply_key_array(b.type, func, keyboard_keys, mouse_buttons);

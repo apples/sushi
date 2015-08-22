@@ -2,6 +2,8 @@
 
 #include "sushi/sushi.hpp"
 
+#include <iostream>
+
 using namespace std;
 
 using glm::vec2;

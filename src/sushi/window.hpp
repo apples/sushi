@@ -125,25 +125,25 @@ public:
     /// \pre `b.type` is not `UNKNOWN`.
     /// \param b Button to check.
     /// \return True if the button was pressed this frame.
-    bool was_pressed(input_button b);
+    bool was_pressed(input_button b) const;
 
     /// Checks if a button was released this frame.
     /// \pre `b.type` is not `UNKNOWN`.
     /// \param b Button to check.
     /// \return True if the button was released this frame.
-    bool was_released(input_button b);
+    bool was_released(input_button b) const;
 
     /// Checks if a button is currently held down.
     /// \pre `b.type` is not `UNKNOWN`.
     /// \param b Button to check.
     /// \return True if the button is down.
-    bool is_down(input_button b);
+    bool is_down(input_button b) const;
 
     /// Checks if a button is not held down.
     /// \pre `b.type` is not `UNKNOWN`.
     /// \param b Button to check.
     /// \return True if the button is not downs.
-    bool is_up(input_button b);
+    bool is_up(input_button b) const;
 };
 
 }
