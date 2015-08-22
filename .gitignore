@@ -3,8 +3,10 @@
 !test
 !glad
 !lodepng
+!glm
+!glfw
 !include
 !.gitignore
 !.gitmodules
-!CmakeLists.txt
+!CMakeLists.txt
 !assets
