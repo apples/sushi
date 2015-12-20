@@ -102,13 +102,20 @@ void set_uniform(const unique_program& program, const std::string& name, const T
 
 template<>
 inline void set_uniform(const unique_program& program, const std::string& name, const glm::mat4& mat) {
-    glProgramUniformMatrix4fv(program.get(), glGetUniformLocation(program.get(), name.data()), 1, GL_FALSE,
-                              glm::value_ptr(mat));
+    sushi::set_program(program);
+    glUniformMatrix4fv(glGetUniformLocation(program.get(), name.data()), 1, GL_FALSE, glm::value_ptr(mat));
 }
 
 template<>
 inline void set_uniform(const unique_program& program, const std::string& name, const GLint& i) {
-    glProgramUniform1i(program.get(), glGetUniformLocation(program.get(), name.data()), i);
+    sushi::set_program(program);
+    glUniform1i(glGetUniformLocation(program.get(), name.data()), i);
+}
+
+template<>
+inline void set_uniform(const unique_program& program, const std::string& name, const GLfloat& f) {
+    sushi::set_program(program);
+    glUniform1f(glGetUniformLocation(program.get(), name.data()), f);
 }
 
 }

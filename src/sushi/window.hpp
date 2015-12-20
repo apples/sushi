@@ -148,6 +148,18 @@ public:
     /// \param b Button to check.
     /// \return True if the button is not downs.
     bool is_up(input_button b) const;
+
+    int width() const {
+        int width;
+        glfwGetFramebufferSize(handle.get(), &width, nullptr);
+        return width;
+    }
+
+    int height() const {
+        int height;
+        glfwGetFramebufferSize(handle.get(), nullptr, &height);
+        return height;
+    }
 };
 
 }

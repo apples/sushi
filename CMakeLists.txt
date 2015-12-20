@@ -10,6 +10,7 @@ add_library(sushi src/sushi/sushi.hpp src/sushi/window.hpp src/sushi/common.hpp 
 set_property(TARGET sushi PROPERTY CXX_STANDARD 14)
 target_include_directories(sushi PUBLIC src/)
 target_link_libraries(sushi glad lodepng glm glfw)
+target_include_directories(sushi PUBLIC glfw/include)
 
 add_executable(sushi_test test/main.cpp)
 set_property(TARGET sushi_test PROPERTY CXX_STANDARD 14)

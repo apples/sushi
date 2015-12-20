@@ -88,18 +88,47 @@ void window::scroll_cb(GLFWwindow* w, double xoffset, double yoffset) {
 window::window(int width, int height, const std::string& title, bool fullscreen) {
     glfwSetErrorCallback(error_cb);
 
-    GLFWmonitor* monitor = nullptr;
-    if (fullscreen) {
-        monitor = glfwGetPrimaryMonitor();
+    GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+    const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+    glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+    glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+    glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+    glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
+    if (width == 0 || height == 0) {
+        if (fullscreen) {
+            width = mode->width;
+            height = mode->height;
+        } else {
+            std::array<std::array<int,2>,5> vmodes = {{
+                {{1920,1080}},
+                {{1280,768}},
+                {{1024,768}},
+                {{800,600}},
+                {{640,480}},
+            }};
+            for (auto& res : vmodes) {
+                if (res[0] < mode->width && res[1] < mode->height) {
+                    width = res[0];
+                    height = res[1];
+                    break;
+                }
+            }
+            if (width == 0 || height == 0) {
+                width = 800;
+                height = 600;
+            }
+        }
     }
 
-    glfwWindowHint(GLFW_SAMPLES, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+    glfwWindowHint(GLFW_SAMPLES, 0);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    handle.reset(glfwCreateWindow(width, height, title.data(), monitor, nullptr));
+    handle.reset(glfwCreateWindow(width, height, title.data(), (fullscreen? monitor : nullptr), nullptr));
     if (!handle) {
         throw std::runtime_error("Failed to open window!");
     }
@@ -121,6 +150,8 @@ window::window(int width, int height, const std::string& title, bool fullscreen)
     glDepthFunc(GL_LESS);
     glClearDepth(1.f);
     glClearColor(1, 0, 1, 1);
+    glfwGetFramebufferSize(handle.get(), &width, &height);
+    glViewport(0, 0, width, height);
 }
 
 void window::main_loop(std::function<void()> func) {

@@ -46,7 +46,7 @@ struct texture_2d {
 /// \param smooth Request texture smoothing.
 /// \param wrap Request texture wrapping.
 /// \return The texture represented by the file, or an empty texture if a failure occurs.
-texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap);
+texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, bool anisotropy);
 
 /// Sets the texture for a slot.
 /// \param slot Slot index. Must be within the range `[0,GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)`.
