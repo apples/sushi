@@ -11,8 +11,25 @@
 #include <fstream>
 #include <utility>
 
+#define SUSHI_CAT_IMPL(A,B) A##B
+#define SUSHI_CAT(A,B) SUSHI_CAT_IMPL(A,B)
+#define SUSHI_DEFER auto SUSHI_CAT(_defer_var_, __LINE__) = ::sushi::_defer{} + [&]()
+
 /// Sushi
 namespace sushi {
+
+struct _defer {
+    template <typename F>
+    struct _defer_impl {
+        F func;
+        bool active;
+        _defer_impl(F f) : func(std::move(f)), active(true) {}
+        _defer_impl(_defer_impl&& other) : func(std::move(other.func)), active(std::exchange(other.active,false)) {}
+        ~_defer_impl() noexcept(false) { if (active) func(); }
+    };
+    template <typename F>
+    _defer_impl<F> operator+(F f) { return {std::move(f)}; }
+};
 
 /// Allows a value type to be used as a Nullable.
 template<typename T>
