@@ -42,4 +42,15 @@ texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, boo
     return rv;
 }
 
+texture_2d create_uninitialized_texture_2d(int width, int height, TexType type) {
+    texture_2d rv = {make_unique_texture(), width, height};
+    sushi::set_texture(0, rv);
+    glTexImage2D(GL_TEXTURE_2D, 0, type, width, height, 0, type, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    return rv;
 }
+
+} // namespace sushi

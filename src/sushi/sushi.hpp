@@ -10,5 +10,6 @@
 #include "mesh.hpp"
 #include "texture.hpp"
 #include "shader.hpp"
+#include "framebuffer.hpp"
 
 #endif //SUSHI_SUSHI_HPP

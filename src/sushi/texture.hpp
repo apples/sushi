@@ -56,6 +56,13 @@ inline void set_texture(int slot, const texture_2d& tex) {
     glBindTexture(GL_TEXTURE_2D, tex.handle.get());
 }
 
-}
+enum TexType : GLint {
+    COLOR = GL_RGB,
+    DEPTH = GL_DEPTH_COMPONENT
+};
+
+texture_2d create_uninitialized_texture_2d(int width, int height, TexType type = TexType::COLOR);
+
+} // namespace sushi
 
 #endif //SUSHI_TEXTURE_HPP
