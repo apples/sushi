@@ -139,6 +139,10 @@ void animated_mesh::set_anim(const std::string& name) {
 }
 
 void animated_mesh::update(float delta) {
+    if (!anim) {
+        return;
+    }
+
     auto frame = int(time * anim->framerate);
 
     if (anim->loop) {
