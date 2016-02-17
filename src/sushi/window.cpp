@@ -150,6 +150,8 @@ window::window(int width, int height, const std::string& title, bool fullscreen)
     glDepthFunc(GL_LESS);
     glClearDepth(1.f);
     glClearColor(1, 0, 1, 1);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glfwGetFramebufferSize(handle.get(), &width, &height);
     glViewport(0, 0, width, height);
 }
