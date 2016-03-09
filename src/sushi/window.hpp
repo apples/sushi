@@ -7,6 +7,7 @@
 
 #include "gl.hpp"
 #include "key_array.hpp"
+#include "event.hpp"
 
 #include <string>
 #include <vector>
@@ -84,6 +85,9 @@ class window {
     /// UTF-32 string that the user has typed during this frame.
     std::vector<unsigned> char_buffer;
 
+    /// Buffer of events that have happened during this frame.
+    std::vector<event> event_buffer;
+
     /// End of last tick cycle; beginning of current tick cycle.
     int last_tick = 0;
 
@@ -148,6 +152,12 @@ public:
     /// \param b Button to check.
     /// \return True if the button is not downs.
     bool is_up(input_button b) const;
+
+    /// Returns a copy of this frame's event buffer.
+    /// \return Copy of the event buffer.
+    std::vector<event> get_events() const {
+        return event_buffer;
+    }
 
     int width() const {
         int width;

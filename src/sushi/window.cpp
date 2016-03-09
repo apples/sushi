@@ -39,7 +39,9 @@ void window::char_cb(GLFWwindow* w, unsigned codepoint) {
 
 void window::cursor_pos_cb(GLFWwindow* w, double xpos, double ypos) {
     window& self = *static_cast<window*>(glfwGetWindowUserPointer(w));
+    auto old_pos = self.mouse_pos;
     self.mouse_pos = glm::vec2{xpos, ypos};
+    self.event_buffer.push_back({event_mouse_move{old_pos}, self.mouse_pos});
 }
 
 void window::key_cb(GLFWwindow* w, int key, int scancode, int action, int mods) {
@@ -56,9 +58,11 @@ void window::key_cb(GLFWwindow* w, int key, int scancode, int action, int mods) 
     switch (action) {
         case GLFW_PRESS:
             self.keyboard_keys.press(key, self.current_tick);
+            self.event_buffer.push_back({event_keyboard_press{key}, self.mouse_pos});
             break;
         case GLFW_RELEASE:
             self.keyboard_keys.release(key, self.current_tick);
+            self.event_buffer.push_back({event_keyboard_release{key}, self.mouse_pos});
             break;
     }
 }
@@ -73,9 +77,11 @@ void window::mouse_button_cb(GLFWwindow* w, int button, int action, int mods) {
     switch (action) {
         case GLFW_PRESS:
             self.mouse_buttons.press(button, self.current_tick);
+            self.event_buffer.push_back({event_mouse_press{button}, self.mouse_pos});
             break;
         case GLFW_RELEASE:
             self.mouse_buttons.release(button, self.current_tick);
+            self.event_buffer.push_back({event_mouse_release{button}, self.mouse_pos});
             break;
     }
 }
@@ -159,6 +165,7 @@ window::window(int width, int height, const std::string& title, bool fullscreen)
 void window::main_loop(std::function<void()> func) {
     while (!glfwWindowShouldClose(handle.get())) {
         last_tick = current_tick;
+        event_buffer.clear();
         glfwPollEvents();
         glClear(GL_DEPTH_BUFFER_BIT);
         func();

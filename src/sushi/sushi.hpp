@@ -7,6 +7,7 @@
 
 #include "window.hpp"
 
+#include "event.hpp"
 #include "mesh.hpp"
 #include "texture.hpp"
 #include "shader.hpp"

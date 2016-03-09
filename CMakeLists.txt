@@ -11,6 +11,7 @@ add_library(sushi
     src/sushi/common.hpp
     src/sushi/gl.hpp
     src/sushi/key_array.hpp
+    src/sushi/event.hpp
     src/sushi/window.hpp src/sushi/window.cpp
     src/sushi/texture.hpp src/sushi/texture.cpp
     src/sushi/mesh.hpp src/sushi/mesh.cpp
