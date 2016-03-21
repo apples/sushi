@@ -35,6 +35,7 @@ void window::error_cb(int error, const char* description) {
 void window::char_cb(GLFWwindow* w, unsigned codepoint) {
     window& self = *static_cast<window*>(glfwGetWindowUserPointer(w));
     self.char_buffer.push_back(codepoint);
+    self.event_buffer.push_back({event_char{codepoint}, self.mouse_pos});
 }
 
 void window::cursor_pos_cb(GLFWwindow* w, double xpos, double ypos) {

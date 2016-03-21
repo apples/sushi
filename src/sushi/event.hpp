@@ -1,6 +1,8 @@
 #ifndef SUSHI_EVENT_HPP
 #define SUSHI_EVENT_HPP
 
+#include "gl.hpp"
+
 #include <boost/variant.hpp>
 #include <glm/vec2.hpp>
 
@@ -26,12 +28,17 @@ struct event_mouse_move {
     glm::vec2 from;
 };
 
+struct event_char {
+    unsigned codepoint;
+};
+
 using event_data = boost::variant<
     event_keyboard_press,
     event_keyboard_release,
     event_mouse_press,
     event_mouse_release,
-    event_mouse_move
+    event_mouse_move,
+    event_char
 >;
 
 struct event {
