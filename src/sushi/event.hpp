@@ -8,28 +8,38 @@
 
 namespace sushi {
 
-struct event_keyboard_press {
+struct event_any {};
+struct event_keyboard : event_any {};
+struct event_mouse : event_any {};
+
+struct event_keyboard_press : event_keyboard {
     int key;
+    event_keyboard_press(int key) : key(key) {}
 };
 
-struct event_keyboard_release {
+struct event_keyboard_release : event_keyboard {
     int key;
+    event_keyboard_release(int key) : key(key) {}
 };
 
-struct event_mouse_press {
+struct event_mouse_press : event_mouse {
     int button;
+    event_mouse_press(int button) : button(button) {}
 };
 
-struct event_mouse_release {
+struct event_mouse_release : event_mouse {
     int button;
+    event_mouse_release(int button) : button(button) {}
 };
 
-struct event_mouse_move {
+struct event_mouse_move : event_mouse {
     glm::vec2 from;
+    event_mouse_move(glm::vec2 from) : from(from) {}
 };
 
-struct event_char {
+struct event_char : event_keyboard {
     unsigned codepoint;
+    event_char(unsigned codepoint) : codepoint(codepoint) {}
 };
 
 using event_data = boost::variant<
