@@ -10,7 +10,7 @@
 
 namespace sushi {
 
-texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, bool anisotropy) {
+texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, bool anisotropy, TexType type) {
     std::vector<unsigned char> image;
     unsigned width, height;
     auto error = lodepng::decode(image, width, height, fname);
@@ -30,7 +30,7 @@ texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, boo
 
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (smooth ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST));
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (smooth ? GL_LINEAR : GL_NEAREST));
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, &image[0]);
+    glTexImage2D(GL_TEXTURE_2D, 0, GLint(type), width, height, 0, (type == TexType::UCOLOR ? GL_RGBA_INTEGER : GL_RGBA), GL_UNSIGNED_BYTE, &image[0]);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     if (anisotropy) {
@@ -45,11 +45,11 @@ texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, boo
 texture_2d create_uninitialized_texture_2d(int width, int height, TexType type) {
     texture_2d rv = {make_unique_texture(), width, height};
     sushi::set_texture(0, rv);
-    glTexImage2D(GL_TEXTURE_2D, 0, type, width, height, 0, type, GL_UNSIGNED_BYTE, nullptr);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GLint(type), width, height, 0, GLint(type), GL_UNSIGNED_BYTE, nullptr);
     return rv;
 }
 

@@ -98,24 +98,51 @@ inline void set_program(const unique_program& program) {
 /// \param name The name of the uniform.
 /// \param data The value to set to the uniform.
 template<typename T>
-void set_uniform(const unique_program& program, const std::string& name, const T& data);
+void set_program_uniform(const unique_program& program, const std::string& name, const T& data);
 
 template<>
-inline void set_uniform(const unique_program& program, const std::string& name, const glm::mat4& mat) {
+inline void set_program_uniform(const unique_program& program, const std::string& name, const glm::mat4& mat) {
     sushi::set_program(program);
     glUniformMatrix4fv(glGetUniformLocation(program.get(), name.data()), 1, GL_FALSE, glm::value_ptr(mat));
 }
 
 template<>
-inline void set_uniform(const unique_program& program, const std::string& name, const GLint& i) {
+inline void set_program_uniform(const unique_program& program, const std::string& name, const GLint& i) {
     sushi::set_program(program);
     glUniform1i(glGetUniformLocation(program.get(), name.data()), i);
 }
 
 template<>
-inline void set_uniform(const unique_program& program, const std::string& name, const GLfloat& f) {
+inline void set_program_uniform(const unique_program& program, const std::string& name, const GLfloat& f) {
     sushi::set_program(program);
     glUniform1f(glGetUniformLocation(program.get(), name.data()), f);
+}
+
+/// Sets a uniform in the currently bound shader program.
+/// \param name The name of the uniform.
+/// \param data The value to set to the uniform.
+template<typename T>
+void set_uniform(const std::string& name, const T& data);
+
+template<>
+inline void set_uniform(const std::string& name, const glm::mat4& mat) {
+    GLint program;
+    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
+    glUniformMatrix4fv(glGetUniformLocation(program, name.data()), 1, GL_FALSE, glm::value_ptr(mat));
+}
+
+template<>
+inline void set_uniform(const std::string& name, const GLint& i) {
+    GLint program;
+    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
+    glUniform1i(glGetUniformLocation(program, name.data()), i);
+}
+
+template<>
+inline void set_uniform(const std::string& name, const GLfloat& f) {
+    GLint program;
+    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
+    glUniform1f(glGetUniformLocation(program, name.data()), f);
 }
 
 }

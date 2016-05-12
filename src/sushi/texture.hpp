@@ -41,12 +41,19 @@ struct texture_2d {
     int height = 0;
 };
 
+enum class TexType : GLint {
+    COLOR = GL_RGB,
+    COLORA = GL_RGBA,
+    UCOLOR = GL_RGB8UI,
+    DEPTH = GL_DEPTH_COMPONENT
+};
+
 /// Loads a 2D texture from a PNG file.
 /// \param fname File name.
 /// \param smooth Request texture smoothing.
 /// \param wrap Request texture wrapping.
 /// \return The texture represented by the file, or an empty texture if a failure occurs.
-texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, bool anisotropy);
+texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, bool anisotropy, TexType type = TexType::COLORA);
 
 /// Sets the texture for a slot.
 /// \param slot Slot index. Must be within the range `[0,GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)`.
@@ -55,11 +62,6 @@ inline void set_texture(int slot, const texture_2d& tex) {
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, tex.handle.get());
 }
-
-enum TexType : GLint {
-    COLOR = GL_RGB,
-    DEPTH = GL_DEPTH_COMPONENT
-};
 
 texture_2d create_uninitialized_texture_2d(int width, int height, TexType type = TexType::COLOR);
 

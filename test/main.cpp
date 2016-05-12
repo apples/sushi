@@ -39,8 +39,8 @@ int main() try {
 
         auto mvp = proj_mat * view_mat * model_mat;
 
-        sushi::set_uniform(program, "MVP", mvp);
-        sushi::set_uniform(program, "DiffuseTexture", 0);
+        sushi::set_program_uniform(program, "MVP", mvp);
+        sushi::set_program_uniform(program, "DiffuseTexture", 0);
 
         auto key_A = sushi::input_button(sushi::input_type::KEYBOARD, GLFW_KEY_A);
 
@@ -52,7 +52,7 @@ int main() try {
             clog << "A released." << endl;
         }
 
-        sushi::set_uniform(program, "GrayScale",
+        sushi::set_program_uniform(program, "GrayScale",
                            int(window.is_down(sushi::input_button(sushi::input_type::KEYBOARD, GLFW_KEY_A))));
 
         sushi::set_texture(0, texture);
