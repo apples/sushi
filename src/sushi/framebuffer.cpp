@@ -25,6 +25,12 @@ framebuffer create_framebuffer(texture_2d color_tex, texture_2d depth_tex) {
             break;
         case GL_FRAMEBUFFER_INCOMPLETE_DIMENSIONS_EXT:
             throw std::runtime_error("Failed to create framebuffer: Texture size mismatch!");
+        case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
+            throw std::runtime_error("Failed to create framebuffer: Incomplete attachments!");
+        case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
+            throw std::runtime_error("Failed to create framebuffer: Missing attachments!");
+        case GL_FRAMEBUFFER_UNSUPPORTED:
+            throw std::runtime_error("Failed to create framebuffer: Unsupported format!");
         default:
             throw std::runtime_error("Failed to create framebuffer: Unknown error!");
     }

@@ -161,6 +161,8 @@ window::window(int width, int height, const std::string& title, bool fullscreen)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glfwGetFramebufferSize(handle.get(), &width, &height);
     glViewport(0, 0, width, height);
+
+    glfwSwapInterval(0);
 }
 
 void window::main_loop(std::function<void()> func) {
@@ -168,7 +170,6 @@ void window::main_loop(std::function<void()> func) {
         last_tick = current_tick;
         event_buffer.clear();
         glfwPollEvents();
-        glClear(GL_DEPTH_BUFFER_BIT);
         func();
         glfwSwapBuffers(handle.get());
     }
