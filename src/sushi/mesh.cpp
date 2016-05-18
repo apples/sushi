@@ -138,6 +138,14 @@ void animated_mesh::set_anim(const std::string& name) {
     time = 0.f;
 }
 
+std::string animated_mesh::get_anim() const {
+    if (anim) {
+        return anim->name;
+    } else {
+        return "";
+    }
+}
+
 void animated_mesh::update(float delta) {
     if (!anim) {
         return;
@@ -163,6 +171,8 @@ void animated_mesh::update(float delta) {
     }
 }
 
+animated_mesh_factory::animated_mesh_factory(std::shared_ptr<animated_mesh::Source> source) : source(std::move(source)) {}
+
 animated_mesh_factory::animated_mesh_factory(const iqm::iqm_data& data) {
     auto pos_arr = data.vertexarrays.position;
     auto norm_arr = data.vertexarrays.normal;
@@ -176,6 +186,7 @@ animated_mesh_factory::animated_mesh_factory(const iqm::iqm_data& data) {
         source->anims.insert(std::make_pair(
             data.anims[i].name,
             animated_mesh::Anim{
+                data.anims[i].name,
                 data.anims[i].first_frame,
                 data.anims[i].num_frames,
                 data.anims[i].framerate,

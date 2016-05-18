@@ -109,6 +109,7 @@ struct animated_mesh {
         int num_tris = 0;
     };
     struct Anim {
+        std::string name;
         int first_frame;
         int num_frames;
         float framerate;
@@ -136,6 +137,9 @@ struct animated_mesh {
     /// If
     void set_anim(const std::string& name);
 
+    /// Gets the name of the current animation.
+    std::string get_anim() const;
+
     /// Updates the animation frame.
     /// \param delta The time since the last update.
     void update(float delta);
@@ -144,6 +148,9 @@ struct animated_mesh {
 /// An animated_mesh factory designed for use with the IQM format.
 struct animated_mesh_factory {
     std::shared_ptr<animated_mesh::Source> source = std::make_shared<animated_mesh::Source>();
+
+    /// Creates a factory from an existing Source.
+    animated_mesh_factory(std::shared_ptr<animated_mesh::Source> source);
 
     /// Creates a factory for meshes loaded from an IQM file.
     animated_mesh_factory(const iqm::iqm_data& data);
