@@ -158,6 +158,13 @@ inline void set_uniform(const std::string& name, const std::array<glm::vec3,N>& 
     glUniform3fv(glGetUniformLocation(program, name.data()), N, data);
 }
 
+template<std::size_t N>
+inline void set_uniform(const std::string& name, const float (&data)[N][3]) {
+    GLint program;
+    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
+    glUniform3fv(glGetUniformLocation(program, name.data()), N, &data[0][0]);
+}
+
 }
 
 #endif //SUSHI_SHADER_HPP
