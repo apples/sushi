@@ -4,21 +4,30 @@
 
 #include "framebuffer.hpp"
 
+#include <numeric>
+
 namespace sushi {
 
-framebuffer create_framebuffer(texture_2d color_tex, texture_2d depth_tex) {
+framebuffer create_framebuffer(std::vector<texture_2d> color_texs, texture_2d depth_tex) {
     framebuffer rv = {
-        std::move(color_tex),
+        depth_tex.width,
+        depth_tex.height,
+        std::move(color_texs),
         std::move(depth_tex),
         make_unique_framebuffer()
     };
 
     glBindFramebuffer(GL_FRAMEBUFFER, rv.handle.get());
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, rv.color_tex.handle.get(), 0);
+
+    for (int i=0; i<rv.color_texs.size(); ++i) {
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, rv.color_texs[i].handle.get(), 0);
+    }
+
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, rv.depth_tex.handle.get(), 0);
 
-    GLenum buffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, buffers);
+    std::vector<GLenum> buffers(rv.color_texs.size());
+    std::iota(begin(buffers), end(buffers), GL_COLOR_ATTACHMENT0);
+    glDrawBuffers(buffers.size(), &buffers[0]);
 
     switch (glCheckFramebufferStatus(GL_FRAMEBUFFER)) {
         case GL_FRAMEBUFFER_COMPLETE:

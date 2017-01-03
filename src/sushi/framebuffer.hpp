@@ -11,6 +11,7 @@
 #include "texture.hpp"
 
 #include <stdexcept>
+#include <vector>
 
 namespace sushi {
 
@@ -37,7 +38,9 @@ inline unique_framebuffer make_unique_framebuffer() {
 
 /// A framebuffer.
 struct framebuffer {
-    texture_2d color_tex;
+    int width = 0;
+    int height = 0;
+    std::vector<texture_2d> color_texs;
     texture_2d depth_tex;
     unique_framebuffer handle;
 };
@@ -46,7 +49,7 @@ struct framebuffer {
 /// \param color_tex Color buffer.
 /// \param depth_tex Depth buffer.
 /// \return The new framebuffer.
-framebuffer create_framebuffer(texture_2d color_tex, texture_2d depth_tex);
+framebuffer create_framebuffer(std::vector<texture_2d> color_texs, texture_2d depth_tex);
 
 /// Sets the given framebuffer as the current.
 /// \param fb Framebuffer.
