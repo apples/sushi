@@ -17,7 +17,7 @@ framebuffer create_framebuffer(std::vector<texture_2d> color_texs, texture_2d de
         make_unique_framebuffer()
     };
 
-    glBindFramebuffer(GL_FRAMEBUFFER, rv.handle.get());
+    set_framebuffer(rv);
 
     for (int i=0; i<rv.color_texs.size(); ++i) {
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, rv.color_texs[i].handle.get(), 0);
@@ -43,6 +43,8 @@ framebuffer create_framebuffer(std::vector<texture_2d> color_texs, texture_2d de
         default:
             throw std::runtime_error("Failed to create framebuffer: Unknown error!");
     }
+
+    set_framebuffer(nullptr);
 
     return rv;
 }

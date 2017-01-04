@@ -55,8 +55,6 @@ framebuffer create_framebuffer(std::vector<texture_2d> color_texs, texture_2d de
 /// \param fb Framebuffer.
 inline void set_framebuffer(const framebuffer& fb) {
     glBindFramebuffer(GL_FRAMEBUFFER, fb.handle.get());
-    GLenum buffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, buffers);
 }
 
 /// Sets the default framebuffer as the current.
