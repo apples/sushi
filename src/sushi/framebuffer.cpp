@@ -6,29 +6,19 @@
 
 #include <numeric>
 
-namespace sushi {
+namespace {
 
-framebuffer create_framebuffer(std::vector<texture_2d> color_texs, texture_2d depth_tex) {
-    framebuffer rv = {
-        depth_tex.width,
-        depth_tex.height,
-        std::move(color_texs),
-        std::move(depth_tex),
-        make_unique_framebuffer()
-    };
-
-    set_framebuffer(rv);
-
-    for (int i=0; i<rv.color_texs.size(); ++i) {
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, rv.color_texs[i].handle.get(), 0);
+void attach_colors(const std::vector<sushi::texture_2d>& texs) {
+    for (int i=0; i<texs.size(); ++i) {
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, texs[i].handle.get(), 0);
     }
 
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, rv.depth_tex.handle.get(), 0);
-
-    std::vector<GLenum> buffers(rv.color_texs.size());
+    std::vector<GLenum> buffers(texs.size());
     std::iota(begin(buffers), end(buffers), GL_COLOR_ATTACHMENT0);
     glDrawBuffers(buffers.size(), &buffers[0]);
+}
 
+void check_framebuffer_errors() {
     switch (glCheckFramebufferStatus(GL_FRAMEBUFFER)) {
         case GL_FRAMEBUFFER_COMPLETE:
             break;
@@ -43,6 +33,64 @@ framebuffer create_framebuffer(std::vector<texture_2d> color_texs, texture_2d de
         default:
             throw std::runtime_error("Failed to create framebuffer: Unknown error!");
     }
+}
+
+} // static
+
+namespace sushi {
+
+framebuffer create_framebuffer(std::vector<texture_2d> color_texs, texture_2d depth_tex) {
+    auto width = std::numeric_limits<int>::max();
+    auto height = std::numeric_limits<int>::max();
+
+    for (auto& tex : color_texs) {
+        width = std::min(width, tex.width);
+        height = std::min(height, tex.height);
+    }
+
+    framebuffer rv = {
+        width,
+        height,
+        make_unique_framebuffer(),
+        std::move(color_texs),
+        std::move(depth_tex)
+    };
+
+    set_framebuffer(rv);
+
+    attach_colors(rv.color_texs);
+
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, rv.depth_tex.handle.get(), 0);
+
+    check_framebuffer_errors();
+
+    set_framebuffer(nullptr);
+
+    return rv;
+}
+
+framebuffer create_framebuffer(std::vector<texture_2d> color_texs) {
+    auto width = std::numeric_limits<int>::max();
+    auto height = std::numeric_limits<int>::max();
+
+    for (auto& tex : color_texs) {
+        width = std::min(width, tex.width);
+        height = std::min(height, tex.height);
+    }
+
+    framebuffer rv = {
+        width,
+        height,
+        make_unique_framebuffer(),
+        std::move(color_texs),
+        {}
+    };
+
+    set_framebuffer(rv);
+
+    attach_colors(rv.color_texs);
+
+    check_framebuffer_errors();
 
     set_framebuffer(nullptr);
 

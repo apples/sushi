@@ -16,6 +16,11 @@
 /// Sushi
 namespace sushi {
 
+class shader_error : public std::runtime_error {
+public:
+    using runtime_error::runtime_error;
+};
+
 /// Shader types.
 enum class shader_type : GLenum {
     VERTEX = GL_VERTEX_SHADER,
@@ -143,6 +148,17 @@ inline void set_uniform(const std::string& name, const GLfloat& f) {
     GLint program;
     glGetIntegerv(GL_CURRENT_PROGRAM,&program);
     glUniform1f(glGetUniformLocation(program, name.data()), f);
+}
+
+template<>
+inline void set_uniform(const std::string& name, const glm::vec3& vec) {
+    GLfloat data[3];
+    for (auto i=0; i<3; ++i) {
+        data[i] = vec[i];
+    }
+    GLint program;
+    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
+    glUniform3fv(glGetUniformLocation(program, name.data()), 1, data);
 }
 
 template<std::size_t N>

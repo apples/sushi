@@ -45,6 +45,7 @@ enum class TexType : GLint {
     COLOR = GL_RGB,
     COLORA = GL_RGBA,
     UCOLOR = GL_RGB8UI,
+    FLOAT3 = GL_RGB32F,
     DEPTH = GL_DEPTH_COMPONENT
 };
 

@@ -40,16 +40,21 @@ inline unique_framebuffer make_unique_framebuffer() {
 struct framebuffer {
     int width = 0;
     int height = 0;
+    unique_framebuffer handle;
     std::vector<texture_2d> color_texs;
     texture_2d depth_tex;
-    unique_framebuffer handle;
 };
 
 /// Creates a framebuffer using the given textures.
-/// \param color_tex Color buffer.
+/// \param color_texs Color buffer.
 /// \param depth_tex Depth buffer.
 /// \return The new framebuffer.
 framebuffer create_framebuffer(std::vector<texture_2d> color_texs, texture_2d depth_tex);
+
+/// Creates a framebuffer using the given textures.
+/// \param color_texs Color buffers.
+/// \return The new framebuffer.
+framebuffer create_framebuffer(std::vector<texture_2d> color_texs);
 
 /// Sets the given framebuffer as the current.
 /// \param fb Framebuffer.

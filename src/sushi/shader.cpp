@@ -42,7 +42,7 @@ unique_shader compile_shader(shader_type type, std::vector<const GLchar*> code) 
             oss << "Shader compilation log:\n" << log.get() << std::endl;
         }
 
-        throw std::runtime_error(oss.str());
+        throw shader_error(oss.str());
     }
 
     return rv;
@@ -55,7 +55,11 @@ unique_shader compile_shader_file(shader_type type, const std::string& fname) {
     line_pointers.reserve(lines.size());
     std::transform(begin(lines), end(lines), std::back_inserter(line_pointers), [](auto &line) { return line.data(); });
 
-    return compile_shader(type, line_pointers);
+    try {
+        return compile_shader(type, line_pointers);
+    } catch (const shader_error& e) {
+        throw shader_error(fname + ": " + e.what());
+    }
 }
 
 unique_program link_program(const std::vector<const_reference_wrapper<unique_shader>>& shaders) {
