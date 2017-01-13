@@ -58,8 +58,14 @@ framebuffer create_framebuffer(std::vector<texture_2d> color_texs);
 
 /// Sets the given framebuffer as the current.
 /// \param fb Framebuffer.
+inline void set_framebuffer(const unique_framebuffer& fb) {
+    glBindFramebuffer(GL_FRAMEBUFFER, fb.get());
+}
+
+/// Sets the given framebuffer as the current.
+/// \param fb Framebuffer.
 inline void set_framebuffer(const framebuffer& fb) {
-    glBindFramebuffer(GL_FRAMEBUFFER, fb.handle.get());
+    set_framebuffer(fb.handle);
 }
 
 /// Sets the default framebuffer as the current.

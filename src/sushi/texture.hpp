@@ -41,10 +41,16 @@ struct texture_2d {
     int height = 0;
 };
 
+/// A cubemap texture.
+struct texture_cubemap {
+    unique_texture handle;
+};
+
 enum class TexType : GLint {
     COLOR = GL_RGB,
     COLORA = GL_RGBA,
     UCOLOR = GL_RGB8UI,
+    FLOAT1 = GL_R32F,
     FLOAT3 = GL_RGB32F,
     DEPTH = GL_DEPTH_COMPONENT
 };
@@ -56,15 +62,31 @@ enum class TexType : GLint {
 /// \return The texture represented by the file, or an empty texture if a failure occurs.
 texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, bool anisotropy, TexType type = TexType::COLORA);
 
+/// Sets the active texture slot.
+/// \param slot Slot index. Must be within the range `[0,GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)`.
+inline void set_active_texture(int slot) {
+    glActiveTexture(GL_TEXTURE0 + slot);
+}
+
 /// Sets the texture for a slot.
 /// \param slot Slot index. Must be within the range `[0,GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)`.
 /// \param tex The texture to bind.
 inline void set_texture(int slot, const texture_2d& tex) {
-    glActiveTexture(GL_TEXTURE0 + slot);
+    set_active_texture(slot);
     glBindTexture(GL_TEXTURE_2D, tex.handle.get());
 }
 
+/// Sets the texture for a slot.
+/// \param slot Slot index. Must be within the range `[0,GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)`.
+/// \param tex The texture to bind.
+inline void set_texture(int slot, const texture_cubemap& tex) {
+    set_active_texture(slot);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex.handle.get());
+}
+
 texture_2d create_uninitialized_texture_2d(int width, int height, TexType type = TexType::COLOR);
+
+texture_cubemap create_uninitialized_texture_cubemap(int width, TexType type = TexType::COLOR);
 
 } // namespace sushi
 

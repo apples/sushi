@@ -12,5 +12,6 @@
 #include "texture.hpp"
 #include "shader.hpp"
 #include "framebuffer.hpp"
+#include "framebuffer_cubemap.hpp"
 
 #endif //SUSHI_SUSHI_HPP

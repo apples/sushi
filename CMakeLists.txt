@@ -18,6 +18,7 @@ add_library(sushi
     src/sushi/shader.hpp src/sushi/shader.cpp
     src/sushi/iqm.hpp src/sushi/iqm.cpp
     src/sushi/framebuffer.cpp src/sushi/framebuffer.hpp
+    src/sushi/framebuffer_cubemap.cpp src/sushi/framebuffer_cubemap.hpp
 )
 set_property(TARGET sushi PROPERTY CXX_STANDARD 14)
 target_include_directories(sushi PUBLIC src/)

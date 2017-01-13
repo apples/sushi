@@ -15,6 +15,7 @@ constexpr GLenum get_source_type(sushi::TexType type) {
         case sushi::TexType::COLOR: return GL_RGB;
         case sushi::TexType::COLORA: return GL_RGBA;
         case sushi::TexType::UCOLOR: return GL_RGBA_INTEGER;
+        case sushi::TexType::FLOAT1: return GL_RED;
         case sushi::TexType::FLOAT3: return GL_RGB;
         case sushi::TexType::DEPTH: return GL_DEPTH_COMPONENT;
     }
@@ -64,6 +65,23 @@ texture_2d create_uninitialized_texture_2d(int width, int height, TexType type) 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, GLint(type), width, height, 0, get_source_type(type), GL_UNSIGNED_BYTE, nullptr);
+    return rv;
+}
+
+texture_cubemap create_uninitialized_texture_cubemap(int width, TexType type) {
+    texture_cubemap rv = {make_unique_texture()};
+    sushi::set_texture(0, rv);
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    for (auto i=0u; i<6; ++i) {
+        glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GLint(type), width, width, 0, get_source_type(type), GL_UNSIGNED_BYTE, nullptr);
+    }
+
     return rv;
 }
 
