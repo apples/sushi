@@ -19,6 +19,7 @@ add_library(sushi
     src/sushi/iqm.hpp src/sushi/iqm.cpp
     src/sushi/framebuffer.cpp src/sushi/framebuffer.hpp
     src/sushi/framebuffer_cubemap.cpp src/sushi/framebuffer_cubemap.hpp
+    src/sushi/frustum.cpp src/sushi/frustum.hpp
 )
 set_property(TARGET sushi PROPERTY CXX_STANDARD 14)
 target_include_directories(sushi PUBLIC src/)

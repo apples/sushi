@@ -64,6 +64,7 @@ struct static_mesh {
     unique_vertex_array vao;
     unique_buffer vertex_buffer;
     int num_triangles = 0;
+    float bounding_sphere = 0;
 };
 
 struct attrib_location {

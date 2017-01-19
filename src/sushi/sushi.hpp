@@ -13,5 +13,6 @@
 #include "shader.hpp"
 #include "framebuffer.hpp"
 #include "framebuffer_cubemap.hpp"
+#include "frustum.hpp"
 
 #endif //SUSHI_SUSHI_HPP

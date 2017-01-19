@@ -20,6 +20,12 @@ static_mesh upload_static_mesh(const std::vector<GLfloat>& data, int num_tris) {
     rv.vao = make_unique_vertex_array();
     rv.vertex_buffer = make_unique_buffer();
     rv.num_triangles = num_tris;
+    rv.bounding_sphere = 0;
+
+    for (int i=0; i<num_tris*3; ++i) {
+        auto pos = glm::vec3{data[i*8+0],data[i*8+1],data[i*8+2]};
+        rv.bounding_sphere = std::max(glm::length(pos), rv.bounding_sphere);
+    }
 
     glBindBuffer(GL_ARRAY_BUFFER, rv.vertex_buffer.get());
     glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(GLfloat), &data[0], GL_STATIC_DRAW);
