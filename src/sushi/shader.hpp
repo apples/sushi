@@ -151,6 +151,17 @@ inline void set_uniform(const std::string& name, const GLfloat& f) {
 }
 
 template<>
+inline void set_uniform(const std::string& name, const glm::vec2& vec) {
+    GLfloat data[2];
+    for (auto i=0; i<2; ++i) {
+        data[i] = vec[i];
+    }
+    GLint program;
+    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
+    glUniform2fv(glGetUniformLocation(program, name.data()), 1, data);
+}
+
+template<>
 inline void set_uniform(const std::string& name, const glm::vec3& vec) {
     GLfloat data[3];
     for (auto i=0; i<3; ++i) {
@@ -159,6 +170,17 @@ inline void set_uniform(const std::string& name, const glm::vec3& vec) {
     GLint program;
     glGetIntegerv(GL_CURRENT_PROGRAM,&program);
     glUniform3fv(glGetUniformLocation(program, name.data()), 1, data);
+}
+
+template<>
+inline void set_uniform(const std::string& name, const glm::vec4& vec) {
+    GLfloat data[4];
+    for (auto i=0; i<4; ++i) {
+        data[i] = vec[i];
+    }
+    GLint program;
+    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
+    glUniform4fv(glGetUniformLocation(program, name.data()), 1, data);
 }
 
 template<std::size_t N>

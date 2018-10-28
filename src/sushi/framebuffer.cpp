@@ -10,7 +10,7 @@ namespace {
 
 void attach_colors(const std::vector<sushi::texture_2d>& texs) {
     for (int i=0; i<texs.size(); ++i) {
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, texs[i].handle.get(), 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, texs[i].handle.get(), 0);
     }
 
     std::vector<GLenum> buffers(texs.size());
@@ -60,7 +60,7 @@ framebuffer create_framebuffer(std::vector<texture_2d> color_texs, texture_2d de
 
     attach_colors(rv.color_texs);
 
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, rv.depth_tex.handle.get(), 0);
+    glFramebufferTextureEXT(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, rv.depth_tex.handle.get(), 0);
 
     check_framebuffer_errors();
 
