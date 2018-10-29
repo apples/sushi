@@ -193,8 +193,8 @@ animated_mesh_factory::animated_mesh_factory(const iqm::iqm_data& data) {
             data.anims[i].name,
             animated_mesh::Anim{
                 data.anims[i].name,
-                data.anims[i].first_frame,
-                data.anims[i].num_frames,
+                (int)data.anims[i].first_frame,
+                (int)data.anims[i].num_frames,
                 data.anims[i].framerate,
                 data.anims[i].loop
             }
@@ -291,8 +291,8 @@ animated_mesh_factory::animated_mesh_factory(const iqm::iqm_data& data) {
 
         glBindBuffer(GL_ARRAY_BUFFER, mesh.idex_vb.get());
         glBufferData(GL_ARRAY_BUFFER, m.num_vertexes * 4, &idex_arr[m.first_vertex*4], GL_STATIC_DRAW);
-        glVertexAttribIPointer(
-            3, 4, GL_UNSIGNED_BYTE, 0,
+        glVertexAttribPointer(
+            3, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0,
             reinterpret_cast<const GLvoid *>(0));
 
         glBindBuffer(GL_ARRAY_BUFFER, mesh.weight_vb.get());
