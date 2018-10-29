@@ -5,6 +5,6 @@
 !test
 !include
 !.gitignore
-!.gitmodules
 !CMakeLists.txt
 !LICENSE.txt
+!README.md
