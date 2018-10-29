@@ -89,7 +89,7 @@ unique_shader compile_shader_file(shader_type type, const std::string& fname);
 /// \pre All of the shaders are compiled.
 /// \param shaders List of shaders to link.
 /// \return Unique handle to the new shader program.
-unique_program link_program(const std::vector<const_reference_wrapper<unique_shader>>& shaders);
+unique_program link_program(const std::vector<unique_shader>& shaders);
 
 /// Sets the current shader program.
 /// \pre The program was successfully linked.
@@ -98,110 +98,97 @@ inline void set_program(const unique_program& program) {
     glUseProgram(program.get());
 }
 
+/// Sets an integer uniform of the current program.
+/// \param location Location of the uniform.
+/// \param i Integer.
+inline void set_current_program_uniform(GLint location, const GLint& i) {
+    glUniform1i(location, i);
+}
+
+/// Sets a float uniform of the current program.
+/// \param location Location of the uniform.
+/// \param f Float.
+inline void set_current_program_uniform(GLint location, const GLfloat& f) {
+    glUniform1f(location, f);
+}
+
+/// Sets a vec2 uniform of the current program.
+/// \param location Location of the uniform.
+/// \param vec Vector.
+inline void set_current_program_uniform(GLint location, const glm::vec2& vec) {
+    glUniform2fv(location, 1, glm::value_ptr(vec));
+}
+
+/// Sets a vec3 uniform of the current program.
+/// \param location Location of the uniform.
+/// \param vec Vector.
+inline void set_current_program_uniform(GLint location, const glm::vec3& vec) {
+    glUniform3fv(location, 1, glm::value_ptr(vec));
+}
+
+/// Sets a vec4 uniform of the current program.
+/// \param location Location of the uniform.
+/// \param vec Vector.
+inline void set_current_program_uniform(GLint location, const glm::vec4& vec) {
+    glUniform4fv(location, 1, glm::value_ptr(vec));
+}
+
+/// Sets a mat4 uniform of the current program.
+/// \param location Location of the uniform.
+/// \param mat Matrix.
+inline void set_current_program_uniform(GLint location, const glm::mat4& mat) {
+    glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(mat));
+}
+
 /// Sets a uniform in the shader program.
 /// \param program The shader program.
 /// \param name The name of the uniform.
 /// \param data The value to set to the uniform.
 template<typename T>
-void set_program_uniform(const unique_program& program, const std::string& name, const T& data);
-
-template<>
-inline void set_program_uniform(const unique_program& program, const std::string& name, const glm::mat4& mat) {
+void set_program_uniform(const unique_program& program, const std::string& name, const T& data) {
     sushi::set_program(program);
-    glUniformMatrix4fv(glGetUniformLocation(program.get(), name.data()), 1, GL_FALSE, glm::value_ptr(mat));
-}
-
-template<>
-inline void set_program_uniform(const unique_program& program, const std::string& name, const GLint& i) {
-    sushi::set_program(program);
-    glUniform1i(glGetUniformLocation(program.get(), name.data()), i);
-}
-
-template<>
-inline void set_program_uniform(const unique_program& program, const std::string& name, const GLfloat& f) {
-    sushi::set_program(program);
-    glUniform1f(glGetUniformLocation(program.get(), name.data()), f);
+    auto location = glGetUniformLocation(program.get(), name.data());
+    set_current_program_uniform(location, data);
 }
 
 /// Sets a uniform in the currently bound shader program.
 /// \param name The name of the uniform.
 /// \param data The value to set to the uniform.
 template<typename T>
-void set_uniform(const std::string& name, const T& data);
-
-template<>
-inline void set_uniform(const std::string& name, const glm::mat4& mat) {
+void set_uniform(const std::string& name, const T& data) {
     GLint program;
-    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
-    glUniformMatrix4fv(glGetUniformLocation(program, name.data()), 1, GL_FALSE, glm::value_ptr(mat));
+    glGetIntegerv(GL_CURRENT_PROGRAM, &program);
+    auto location = glGetUniformLocation(program, name.data());
+    set_current_program_uniform(location, data);
 }
 
-template<>
-inline void set_uniform(const std::string& name, const GLint& i) {
-    GLint program;
-    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
-    glUniform1i(glGetUniformLocation(program, name.data()), i);
-}
+/// Base class for a safe shader wrapper.
+/// Derived classes should cache uniform locations and implement setters for them.
+class shader_base {
+public:
+    /// Default constructor.
+    shader_base() = default;
 
-template<>
-inline void set_uniform(const std::string& name, const GLfloat& f) {
-    GLint program;
-    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
-    glUniform1f(glGetUniformLocation(program, name.data()), f);
-}
+    /// Compiles and links the provided source files.
+    /// \param sources The source files.
+    shader_base(std::initializer_list<std::pair<sushi::shader_type, std::string>> sources);
 
-template<>
-inline void set_uniform(const std::string& name, const glm::vec2& vec) {
-    GLfloat data[2];
-    for (auto i=0; i<2; ++i) {
-        data[i] = vec[i];
-    }
-    GLint program;
-    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
-    glUniform2fv(glGetUniformLocation(program, name.data()), 1, data);
-}
+    /// Sets this program as the current one.
+    void bind();
 
-template<>
-inline void set_uniform(const std::string& name, const glm::vec3& vec) {
-    GLfloat data[3];
-    for (auto i=0; i<3; ++i) {
-        data[i] = vec[i];
-    }
-    GLint program;
-    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
-    glUniform3fv(glGetUniformLocation(program, name.data()), 1, data);
-}
+    /// Gets the location of the uniform with the given name.
+    /// Requires this shader to be bound.
+    /// \param name Name of the uniform.
+    /// \returns The location of the uniform or -1 if not found.
+    GLint get_uniform_location(const std::string& name) const;
 
-template<>
-inline void set_uniform(const std::string& name, const glm::vec4& vec) {
-    GLfloat data[4];
-    for (auto i=0; i<4; ++i) {
-        data[i] = vec[i];
-    }
-    GLint program;
-    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
-    glUniform4fv(glGetUniformLocation(program, name.data()), 1, data);
-}
+    /// Gets the program.
+    /// \returns Reference to the program.
+    const unique_program& get_program() const;
 
-template<std::size_t N>
-inline void set_uniform(const std::string& name, const std::array<glm::vec3,N>& vecs) {
-    GLfloat data[N*3];
-    for (auto i=0u; i<N; ++i) {
-        for (auto u=0; u<3; ++u) {
-            data[i*3+u] = vecs[i][u];
-        }
-    }
-    GLint program;
-    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
-    glUniform3fv(glGetUniformLocation(program, name.data()), N, data);
-}
-
-template<std::size_t N>
-inline void set_uniform(const std::string& name, const float (&data)[N][3]) {
-    GLint program;
-    glGetIntegerv(GL_CURRENT_PROGRAM,&program);
-    glUniform3fv(glGetUniformLocation(program, name.data()), N, &data[0][0]);
-}
+private:
+    unique_program program;
+};
 
 }
 

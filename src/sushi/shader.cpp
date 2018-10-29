@@ -63,11 +63,11 @@ unique_shader compile_shader_file(shader_type type, const std::string& fname) {
     }
 }
 
-unique_program link_program(const std::vector<const_reference_wrapper<unique_shader>>& shaders) {
+unique_program link_program(const std::vector<unique_shader>& shaders) {
     unique_program rv = make_unique_program();
 
     for (const auto& shader : shaders) {
-        glAttachShader(rv.get(), shader.get().get());
+        glAttachShader(rv.get(), shader.get());
     }
 
     glLinkProgram(rv.get());
@@ -93,6 +93,28 @@ unique_program link_program(const std::vector<const_reference_wrapper<unique_sha
     }
 
     return rv;
+}
+
+
+shader_base::shader_base(std::initializer_list<std::pair<sushi::shader_type, std::string>> sources) {
+    auto compiled = std::vector<unique_shader>();
+    compiled.reserve(sources.size());
+    for (auto& source : sources) {
+        compiled.push_back(compile_shader_file(source.first, source.second));
+    }
+    program = link_program(compiled);
+}
+
+void shader_base::bind() {
+    set_program(program);
+}
+
+GLint shader_base::get_uniform_location(const std::string &name) const {
+    return glGetUniformLocation(program.get(), name.data());
+}
+
+const unique_program &shader_base::get_program() const {
+    return program;
 }
 
 }
