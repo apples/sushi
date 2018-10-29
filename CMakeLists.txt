@@ -1,7 +1,23 @@
 cmake_minimum_required(VERSION 3.2)
 project(sushi)
 
-add_library(sushi EXCLUDE_FROM_ALL
+include(FetchContent)
+
+set(SUSHI_BUILD_EXAMPLES No CACHE BOOL "Build Sushi examples")
+
+find_package(glm REQUIRED)
+
+FetchContent_Declare(
+    lodepng
+    GIT_REPOSITORY https://github.com/apples/lodepng.git
+    GIT_TAG        cmake)
+FetchContent_GetProperties(lodepng)
+if(NOT lodepng_POPULATED)
+    FetchContent_Populate(lodepng)
+    add_subdirectory(${lodepng_SOURCE_DIR} ${lodepng_BINARY_DIR})
+endif()
+
+add_library(sushi
     src/sushi/sushi.hpp
     src/sushi/common.hpp
     src/sushi/gl.hpp
@@ -14,10 +30,18 @@ add_library(sushi EXCLUDE_FROM_ALL
     src/sushi/framebuffer_cubemap.cpp src/sushi/framebuffer_cubemap.hpp
     src/sushi/frustum.cpp src/sushi/frustum.hpp
 )
-set_property(TARGET sushi PROPERTY CXX_STANDARD 14)
+set_target_properties(sushi PROPERTIES CXX_STANDARD 14)
 target_include_directories(sushi PUBLIC src/)
 target_link_libraries(sushi glm lodepng)
 
-if (NOT EMSCRIPTEN)
+if(NOT EMSCRIPTEN)
+    add_subdirectory(ext/glad)
     target_link_libraries(sushi glad)
+endif()
+
+if(SUSHI_BUILD_EXAMPLES)
+    find_package(glfw3 REQUIRED)
+    add_executable(sushi_test test/main.cpp)
+    set_target_properties(sushi_test PROPERTIES CXX_STANDARD 14)
+    target_link_libraries(sushi_test sushi glfw)
 endif()
