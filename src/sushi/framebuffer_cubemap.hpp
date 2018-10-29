@@ -4,6 +4,7 @@
 #include "framebuffer.hpp"
 #include "texture.hpp"
 
+#include <array>
 #include <stdexcept>
 
 namespace sushi {

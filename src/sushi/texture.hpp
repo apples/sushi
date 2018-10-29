@@ -49,9 +49,6 @@ struct texture_cubemap {
 enum class TexType : GLint {
     COLOR = GL_RGB,
     COLORA = GL_RGBA,
-    UCOLOR = GL_RGB8UI,
-    FLOAT1 = GL_R32F,
-    FLOAT3 = GL_RGB32F,
     DEPTH = GL_DEPTH_COMPONENT
 };
 
@@ -59,8 +56,9 @@ enum class TexType : GLint {
 /// \param fname File name.
 /// \param smooth Request texture smoothing.
 /// \param wrap Request texture wrapping.
+/// \param mipmaps Request mipmap generation.
 /// \return The texture represented by the file, or an empty texture if a failure occurs.
-texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, bool anisotropy, TexType type = TexType::COLORA);
+texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, bool anisotropy, bool mipmaps, TexType type = TexType::COLORA);
 
 /// Sets the active texture slot.
 /// \param slot Slot index. Must be within the range `[0,GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS)`.

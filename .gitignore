@@ -1,12 +1,10 @@
 /*
+!assets
+!ext
 !src
 !test
-!glad
-!lodepng
-!glm
-!glfw
 !include
 !.gitignore
-!.gitmodules
 !CMakeLists.txt
-!assets
+!LICENSE.txt
+!README.md

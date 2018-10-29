@@ -14,9 +14,6 @@ constexpr GLenum get_source_type(sushi::TexType type) {
     switch (type) {
         case sushi::TexType::COLOR: return GL_RGB;
         case sushi::TexType::COLORA: return GL_RGBA;
-        case sushi::TexType::UCOLOR: return GL_RGBA_INTEGER;
-        case sushi::TexType::FLOAT1: return GL_RED;
-        case sushi::TexType::FLOAT3: return GL_RGB;
         case sushi::TexType::DEPTH: return GL_DEPTH_COMPONENT;
     }
 }
@@ -25,9 +22,10 @@ constexpr GLenum get_source_type(sushi::TexType type) {
 
 namespace sushi {
 
-texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, bool anisotropy, TexType type) {
+texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, bool anisotropy, bool mipmaps, TexType type) {
     std::vector<unsigned char> image;
     unsigned width, height;
+
     auto error = lodepng::decode(image, width, height, fname);
 
     texture_2d rv;
@@ -43,10 +41,15 @@ texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, boo
 
     glBindTexture(GL_TEXTURE_2D, rv.handle.get());
 
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (smooth ? GL_LINEAR_MIPMAP_LINEAR : GL_NEAREST_MIPMAP_NEAREST));
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, (smooth ? (mipmaps ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR) : (mipmaps ? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST)));
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, (smooth ? GL_LINEAR : GL_NEAREST));
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, (wrap ? GL_REPEAT : GL_CLAMP_TO_EDGE));
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, (wrap ? GL_REPEAT : GL_CLAMP_TO_EDGE));
     glTexImage2D(GL_TEXTURE_2D, 0, GLint(type), width, height, 0, get_source_type(type), GL_UNSIGNED_BYTE, &image[0]);
-    glGenerateMipmap(GL_TEXTURE_2D);
+
+    if (mipmaps) {
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
 
     if (anisotropy) {
         float max_anisotropy;
@@ -60,10 +63,10 @@ texture_2d load_texture_2d(const std::string& fname, bool smooth, bool wrap, boo
 texture_2d create_uninitialized_texture_2d(int width, int height, TexType type) {
     texture_2d rv = {make_unique_texture(), width, height};
     sushi::set_texture(0, rv);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage2D(GL_TEXTURE_2D, 0, GLint(type), width, height, 0, get_source_type(type), GL_UNSIGNED_BYTE, nullptr);
     return rv;
 }
