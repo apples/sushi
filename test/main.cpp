@@ -11,6 +11,41 @@ using namespace std;
 
 using glm::vec2;
 using glm::vec3;
+using glm::mat4;
+
+class example_shader : public sushi::shader_base {
+public:
+    example_shader() :
+        shader_base({
+            {sushi::shader_type::VERTEX, "assets/vert.glsl"},
+            {sushi::shader_type::FRAGMENT, "assets/frag.glsl"}
+        })
+    {
+        bind();
+        uniforms.MVP = get_uniform_location("MVP");
+        uniforms.DiffuseTexture = get_uniform_location("DiffuseTexture");
+        uniforms.GrayScale = get_uniform_location("GrayScale");
+    }
+
+    void set_MVP(const mat4& mat) {
+        sushi::set_current_program_uniform(uniforms.MVP, mat);
+    }
+
+    void set_DiffuseTexture(int i) {
+        sushi::set_current_program_uniform(uniforms.DiffuseTexture, i);
+    }
+
+    void set_GrayScale(int i) {
+        sushi::set_current_program_uniform(uniforms.GrayScale, i);
+    }
+
+private:
+    struct {
+        GLint MVP;
+        GLint DiffuseTexture;
+        GLint GrayScale;
+    } uniforms;
+};
 
 struct window_data {
     bool a_pressed = false;
@@ -54,11 +89,7 @@ int main() try {
 
     auto texture = sushi::load_texture_2d("assets/test.png", false, false, false, false);
     auto mesh = sushi::load_static_mesh_file("assets/test.obj");
-    auto program = sushi::link_program({
-        sushi::compile_shader_file(sushi::shader_type::VERTEX, "assets/vert.glsl"),
-        sushi::compile_shader_file(sushi::shader_type::FRAGMENT, "assets/frag.glsl"),
-    });
-
+    auto program = example_shader();
     auto xrot = 0.f;
     auto yrot = 0.f;
 
@@ -74,7 +105,7 @@ int main() try {
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        sushi::set_program(program);
+        program.bind();
 
         auto proj_mat = glm::perspective(90.f, 4.f / 3.f, 0.01f, 100.f);
         auto view_mat = glm::translate(glm::mat4(1.f), glm::vec3{0.f, 0.f, -5.f});
@@ -88,8 +119,8 @@ int main() try {
 
         auto mvp = proj_mat * view_mat * model_mat;
 
-        sushi::set_program_uniform(program, "MVP", mvp);
-        sushi::set_program_uniform(program, "DiffuseTexture", 0);
+        program.set_MVP(mvp);
+        program.set_DiffuseTexture(0);
 
         if (data.a_pressed) {
             clog << "A pressed." << endl;
@@ -99,7 +130,7 @@ int main() try {
             clog << "A released." << endl;
         }
 
-        sushi::set_program_uniform(program, "GrayScale", int(data.a_down));
+        program.set_GrayScale(data.a_down);
 
         sushi::set_texture(0, texture);
         sushi::draw_mesh(mesh);
