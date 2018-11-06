@@ -5,16 +5,20 @@ include(FetchContent)
 
 set(SUSHI_BUILD_EXAMPLES No CACHE BOOL "Build Sushi examples")
 
-find_package(glm REQUIRED)
+if(NOT TARGET glm)
+    find_package(glm REQUIRED)
+endif()
 
-FetchContent_Declare(
-    lodepng
-    GIT_REPOSITORY https://github.com/apples/lodepng.git
-    GIT_TAG        cmake)
-FetchContent_GetProperties(lodepng)
-if(NOT lodepng_POPULATED)
-    FetchContent_Populate(lodepng)
-    add_subdirectory(${lodepng_SOURCE_DIR} ${lodepng_BINARY_DIR})
+if(NOT TARGET lodepng)
+    FetchContent_Declare(
+        lodepng
+        GIT_REPOSITORY https://github.com/apples/lodepng.git
+        GIT_TAG        cmake)
+    FetchContent_GetProperties(lodepng)
+    if(NOT lodepng_POPULATED)
+        FetchContent_Populate(lodepng)
+        add_subdirectory(${lodepng_SOURCE_DIR} ${lodepng_BINARY_DIR})
+    endif()
 endif()
 
 add_library(sushi
