@@ -6,6 +6,7 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <chrono>
 
 using namespace std;
 
@@ -25,6 +26,8 @@ public:
         uniforms.MVP = get_uniform_location("MVP");
         uniforms.DiffuseTexture = get_uniform_location("DiffuseTexture");
         uniforms.GrayScale = get_uniform_location("GrayScale");
+        uniforms.Animated = get_uniform_location("Animated");
+        uniforms.Bones = get_uniform_location("Bones");
     }
 
     void set_MVP(const mat4& mat) {
@@ -39,11 +42,21 @@ public:
         sushi::set_current_program_uniform(uniforms.GrayScale, i);
     }
 
+    void set_Animated(bool b) {
+        sushi::set_current_program_uniform(uniforms.Animated, +b);
+    }
+
+    void set_Bones(const glm::mat4* mats, int num_mats) {
+        glUniformMatrix4fv(uniforms.Bones, num_mats, GL_FALSE, &mats[0][0].x);
+    }
+
 private:
     struct {
         GLint MVP;
         GLint DiffuseTexture;
         GLint GrayScale;
+        GLint Animated;
+        GLint Bones;
     } uniforms;
 };
 
@@ -93,34 +106,29 @@ int main() try {
     auto xrot = 0.f;
     auto yrot = 0.f;
 
+    auto player_iqm = sushi::iqm::load_iqm("assets/player.iqm");
+    auto player_iqm_factory = sushi::animated_mesh_factory(player_iqm);
+    auto player_anim = player_iqm_factory.get("Cube");
+    player_anim.set_anim("Walk");
+    player_anim.update(0);
+    auto player_tex = sushi::load_texture_2d("assets/player.png", true, false, true, true);
+
     auto data = window_data{};
 
     glfwSetWindowUserPointer(window, &data);
 
+    using clock = std::chrono::high_resolution_clock;
+    auto last_time = clock::now();
+
     while (!glfwWindowShouldClose(window)) {
+        auto time = clock::now();
+        auto delta = std::chrono::duration<double>(time - last_time).count();
+        last_time = time;
+
         data.a_pressed = false;
         data.a_released = false;
 
         glfwPollEvents();
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-        program.bind();
-
-        auto proj_mat = glm::perspective(90.f, 4.f / 3.f, 0.01f, 100.f);
-        auto view_mat = glm::translate(glm::mat4(1.f), glm::vec3{0.f, 0.f, -5.f});
-        auto model_mat = glm::mat4(1.f);
-
-        model_mat = glm::rotate(model_mat, xrot, glm::vec3{1, 0, 0});
-        model_mat = glm::rotate(model_mat, yrot, glm::vec3{0, 1, 0});
-
-        xrot += 0.0001;
-        yrot += 0.001;
-
-        auto mvp = proj_mat * view_mat * model_mat;
-
-        program.set_MVP(mvp);
-        program.set_DiffuseTexture(0);
 
         if (data.a_pressed) {
             clog << "A pressed." << endl;
@@ -130,10 +138,52 @@ int main() try {
             clog << "A released." << endl;
         }
 
-        program.set_GrayScale(data.a_down);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        sushi::set_texture(0, texture);
-        sushi::draw_mesh(mesh);
+        auto proj_mat = glm::perspective(90.f, 4.f / 3.f, 0.01f, 100.f);
+        auto view_mat = glm::translate(glm::mat4(1.f), glm::vec3{0.f, 0.f, -2.f});
+
+        // draw static mesh
+        {
+            auto model_mat = glm::mat4(1.f);
+
+            xrot += 0.0001;
+            yrot += 0.001;
+
+            model_mat = glm::translate(model_mat, glm::vec3{-1, 0, 0});
+            model_mat = glm::rotate(model_mat, xrot, glm::vec3{1, 0, 0});
+            model_mat = glm::rotate(model_mat, yrot, glm::vec3{0, 1, 0});
+            model_mat = glm::scale(model_mat, glm::vec3{0.5, 0.5, 0.5});
+
+            auto mvp = proj_mat * view_mat * model_mat;
+
+            program.bind();
+            program.set_MVP(mvp);
+            program.set_DiffuseTexture(0);
+            program.set_GrayScale(data.a_down);
+            program.set_Animated(false);
+            sushi::set_texture(0, texture);
+            sushi::draw_mesh(mesh);
+        }
+
+        // draw animated mesh
+        {
+            player_anim.update(delta);
+            auto model_mat = glm::mat4(1.f);
+
+            model_mat = glm::translate(model_mat, glm::vec3{1, 0, 0});
+            model_mat = glm::rotate(model_mat, glm::radians(-90.f), glm::vec3{1, 0, 0});
+
+            auto mvp = proj_mat * view_mat * model_mat;
+
+            program.bind();
+            program.set_MVP(mvp);
+            program.set_DiffuseTexture(0);
+            program.set_GrayScale(data.a_down);
+            program.set_Animated(true);
+            sushi::set_texture(0, player_tex);
+            sushi::draw_mesh(player_anim);
+        }
 
         glfwSwapBuffers(window);
     }

@@ -240,7 +240,7 @@ animated_mesh_factory::animated_mesh_factory(const iqm::iqm_data& data) {
                 }
             }
 
-            auto mat = glm::mat4();
+            auto mat = glm::mat4(1.f);
             mat = glm::translate(mat, pose_pos);
             mat = mat * glm::mat4_cast(glm::normalize(pose_rot));
             mat = glm::scale(mat, pose_scl);
