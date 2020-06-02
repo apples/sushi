@@ -119,13 +119,6 @@ iqm_data load_iqm(const std::string& fname) {
         return rv;
     };
 
-    // text
-
-    std::fseek(file.get(), ofs_text, SEEK_SET);
-    for (auto i = 0u; i < num_text; ++i) {
-        //rv.text.push_back(next_string()); // what exactly is this used for?
-    }
-
     // meshes
 
     std::fseek(file.get(), ofs_meshes, SEEK_SET);
@@ -247,13 +240,6 @@ iqm_data load_iqm(const std::string& fname) {
         b.xyradius = next_float();
         b.radius = next_float();
         rv.bounds.push_back(std::move(b));
-    }
-
-    // comments
-
-    std::fseek(file.get(), ofs_comment, SEEK_SET);
-    for (auto i = 0u; i < num_comment; ++i) {
-        rv.comments.push_back(next_string());
     }
 
     // ignore extensions

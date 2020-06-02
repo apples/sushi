@@ -3,8 +3,8 @@
 layout(location = 0) in vec3 VertexPosition;
 layout(location = 1) in vec2 VertexTexCoord;
 layout(location = 2) in vec3 VertexNormal;
-layout(location = 3) in vec3 VertexIndices;
-layout(location = 4) in vec3 VertexWeights;
+layout(location = 4) in vec3 VertexIndices;
+layout(location = 5) in vec3 VertexWeights;
 
 uniform mat4 MVP;
 uniform bool Animated;

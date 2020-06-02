@@ -78,7 +78,6 @@ struct iqm_data {
     std::vector<std::uint16_t> frames;
     std::uint32_t num_framechannels;
     std::vector<bound> bounds;
-    std::vector<std::string> comments;
 };
 
 /// Loads an IQM file.

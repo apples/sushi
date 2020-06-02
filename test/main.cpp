@@ -107,10 +107,10 @@ int main() try {
     auto yrot = 0.f;
 
     auto player_iqm = sushi::iqm::load_iqm("assets/player.iqm");
-    auto player_iqm_factory = sushi::animated_mesh_factory(player_iqm);
-    auto player_anim = player_iqm_factory.get("Cube");
-    player_anim.set_anim("Walk");
-    player_anim.update(0);
+    auto player_meshes = sushi::load_meshes(player_iqm);
+    auto player_skele = sushi::load_skeleton(player_iqm);
+    auto player_anim = sushi::get_animation_index(player_skele, "Walk");
+    auto player_anim_time = 0.f;
     auto player_tex = sushi::load_texture_2d("assets/player.png", true, false, true, true);
 
     auto data = window_data{};
@@ -168,7 +168,6 @@ int main() try {
 
         // draw animated mesh
         {
-            player_anim.update(delta);
             auto model_mat = glm::mat4(1.f);
 
             model_mat = glm::translate(model_mat, glm::vec3{1, 0, 0});
@@ -182,7 +181,8 @@ int main() try {
             program.set_GrayScale(data.a_down);
             program.set_Animated(true);
             sushi::set_texture(0, player_tex);
-            sushi::draw_mesh(player_anim);
+            sushi::draw_mesh(player_meshes, &player_skele, player_anim, player_anim_time);
+            player_anim_time += delta;
         }
 
         glfwSwapBuffers(window);

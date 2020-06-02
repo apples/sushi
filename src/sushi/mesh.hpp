@@ -12,6 +12,8 @@
 #include <string>
 #include <memory>
 #include <map>
+#include <optional>
+#include <span>
 #include <vector>
 
 /// Sushi
@@ -67,10 +69,14 @@ struct static_mesh {
     float bounding_sphere = 0;
 };
 
-struct attrib_location {
-    static constexpr auto POSITION = 0;
-    static constexpr auto TEXCOORD = 1;
-    static constexpr auto NORMAL = 2;
+enum attrib_location : GLuint {
+    POSITION = 0,
+    TEXCOORD = 1,
+    NORMAL = 2,
+    TANGENT = 3,
+    BLENDINDICES = 4,
+    BLENDWEIGHTS = 5,
+    COLOR = 6,
 };
 
 /// Loads a mesh from an OBJ file.
@@ -97,68 +103,50 @@ struct Tri {
 
 static_mesh load_static_mesh_data(const std::vector<glm::vec3>& positions, const std::vector<glm::vec3>& normals, const std::vector<glm::vec2>& texcoords, const std::vector<Tri>& tris);
 
-/// An animated mesh designed for GPU skinning techniques.
-struct animated_mesh {
-    struct Mesh {
-        unique_buffer pos_vb = make_unique_buffer();
-        unique_buffer norm_vb = make_unique_buffer();
-        unique_buffer tex_vb = make_unique_buffer();
-        unique_buffer idex_vb = make_unique_buffer();
-        unique_buffer weight_vb = make_unique_buffer();
-        unique_vertex_array vao = make_unique_vertex_array();
-        unique_buffer tris = make_unique_buffer();
+struct mesh_group {
+    struct mesh {
+        std::string name;
         int num_tris = 0;
+        unique_buffer tris;
+        unique_vertex_array vao;
     };
-    struct Anim {
+
+    unique_buffer position_buffer;
+    unique_buffer texcoord_buffer;
+    unique_buffer normal_buffer;
+    unique_buffer tangent_buffer;
+    unique_buffer blendindices_buffer;
+    unique_buffer blendweights_buffer;
+    unique_buffer color_buffer;
+    std::vector<mesh> meshes;
+};
+
+struct skeleton {
+    struct animation {
         std::string name;
         int first_frame;
         int num_frames;
         float framerate;
         bool loop;
     };
-    struct Source {
-        std::vector<int> bone_parents;
-        std::vector<glm::mat4> bone_mats;
-        std::vector<glm::mat4> frame_mats;
-        std::map<std::string,Anim> anims;
-        std::map<std::string,Mesh> meshes;
-    };
 
-    std::shared_ptr<const Source> source;
-    const Mesh* mesh;
-    const Anim* anim = nullptr;
-    std::vector<glm::mat4> out_frames;
-    float time = 0.f;
-
-    /// Used by animated_mesh_factory.
-    animated_mesh(std::shared_ptr<const Source> source, const Mesh* mesh);
-
-    /// Resets the animation.
-    /// Resets the frame counter to zero and changes the current animation.
-    /// If
-    void set_anim(const std::string& name);
-
-    /// Gets the name of the current animation.
-    std::string get_anim() const;
-
-    /// Updates the animation frame.
-    /// \param delta The time since the last update.
-    void update(float delta);
+    std::vector<int> bone_parents;
+    std::vector<glm::mat4> bone_mats;
+    std::vector<glm::mat4> frame_mats;
+    std::vector<animation> animations;
 };
 
-/// An animated_mesh factory designed for use with the IQM format.
-struct animated_mesh_factory {
-    std::shared_ptr<animated_mesh::Source> source = std::make_shared<animated_mesh::Source>();
+auto load_meshes(const iqm::iqm_data& data) -> mesh_group;
 
-    /// Creates a factory from an existing Source.
-    animated_mesh_factory(std::shared_ptr<animated_mesh::Source> source);
+auto load_skeleton(const iqm::iqm_data& data) -> skeleton;
 
-    /// Creates a factory for meshes loaded from an IQM file.
-    animated_mesh_factory(const iqm::iqm_data& data);
+auto get_animation_index(const skeleton& skele, const std::string& name) -> std::optional<int>;
 
-    /// Gets a mesh by name.
-    animated_mesh get(const std::string& name);
-};
+auto get_frame(const skeleton& skele, int anim_index, float time) -> std::span<const glm::mat4>;
+
+auto blend_frames(
+    const skeleton& skele, int anim_index, std::span<const glm::mat4> from, std::span<const glm::mat4> to, float time)
+    -> std::vector<glm::mat4>;
 
 /// Draws a mesh.
 /// \param mesh The mesh to draw.
@@ -170,16 +158,36 @@ inline void draw_mesh(const static_mesh& mesh) {
 
 /// Draws a mesh.
 /// \param mesh The mesh to draw.
-inline void draw_mesh(const animated_mesh& mesh) {
-    if (mesh.out_frames.size() > 32) throw;
+inline void draw_mesh(const mesh_group& group, const skeleton* skele, std::optional<int> anim_index, float time) {
     GLint program;
     glGetIntegerv(GL_CURRENT_PROGRAM, &program);
-    glBindVertexArray(mesh.mesh->vao.get());
+
+    auto animated_uniform = glGetUniformLocation(program, "Animated");
+
+    if (skele) {
+        auto frame_mats = [&] {
+            if (anim_index) {
+                auto mats = get_frame(*skele, *anim_index, time);
+                return blend_frames(*skele, *anim_index, mats, mats, time);
+            } else {
+                return skele->bone_mats;
+            }
+        }();
+
+        auto bones_uniform = glGetUniformLocation(program, "Bones");
+
+        glUniform1i(animated_uniform, 1);
+        glUniformMatrix4fv(bones_uniform, frame_mats.size(), GL_FALSE, glm::value_ptr(frame_mats[0]));
+    } else {
+        glUniform1i(animated_uniform, 0);
+    }
+
     SUSHI_DEFER { glBindVertexArray(0); };
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.mesh->tris.get());
-    SUSHI_DEFER { glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0); };
-    glUniformMatrix4fv(glGetUniformLocation(program, "Bones"), mesh.out_frames.size(), GL_FALSE, (GLfloat*)&mesh.out_frames[0]);
-    glDrawElements(GL_TRIANGLES, mesh.mesh->num_tris*3, GL_UNSIGNED_INT, nullptr);
+
+    for (const auto& mesh : group.meshes) {
+        glBindVertexArray(mesh.vao.get());
+        glDrawElements(GL_TRIANGLES, mesh.num_tris * 3, GL_UNSIGNED_INT, nullptr);
+    }
 }
 
 } // namespace sushi
