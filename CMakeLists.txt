@@ -27,7 +27,10 @@ add_library(sushi
     src/sushi/gl.hpp
     src/sushi/gles_shim.hpp
     src/sushi/texture.hpp src/sushi/texture.cpp
+    src/sushi/mesh_utils.hpp
     src/sushi/mesh.hpp src/sushi/mesh.cpp
+    src/sushi/mesh_builder.hpp src/sushi/mesh_builder.cpp
+    src/sushi/obj_loader.hpp src/sushi/obj_loader.cpp
     src/sushi/shader.hpp src/sushi/shader.cpp
     src/sushi/iqm.hpp src/sushi/iqm.cpp
     src/sushi/framebuffer.cpp src/sushi/framebuffer.hpp

@@ -3,6 +3,7 @@
 
 #include <glad/glad.h>
 #include <sushi/sushi.hpp>
+#include <sushi/obj_loader.hpp>
 #include <GLFW/glfw3.h>
 
 #include <iostream>
@@ -101,7 +102,7 @@ int main() try {
     glEnable(GL_DEPTH_TEST);
 
     auto texture = sushi::load_texture_2d("assets/test.png", false, false, false, false);
-    auto mesh = sushi::load_static_mesh_file("assets/test.obj");
+    auto mesh = sushi::load_obj_file("assets/test.obj");
     auto program = example_shader();
     auto xrot = 0.f;
     auto yrot = 0.f;
@@ -161,7 +162,6 @@ int main() try {
             program.set_MVP(mvp);
             program.set_DiffuseTexture(0);
             program.set_GrayScale(data.a_down);
-            program.set_Animated(false);
             sushi::set_texture(0, texture);
             sushi::draw_mesh(mesh);
         }
@@ -179,7 +179,6 @@ int main() try {
             program.set_MVP(mvp);
             program.set_DiffuseTexture(0);
             program.set_GrayScale(data.a_down);
-            program.set_Animated(true);
             sushi::set_texture(0, player_tex);
             sushi::draw_mesh(player_meshes, &player_skele, player_anim, player_anim_time);
             player_anim_time += delta;
