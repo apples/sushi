@@ -63,6 +63,10 @@ auto load_skeleton(const iqm::iqm_data& data) -> skeleton {
 
     // Bones
 
+    skele.bone_parents.reserve(data.joints.size());
+    skele.bone_mats.reserve(data.joints.size());
+    skele.bone_mats_inverse.reserve(data.joints.size());
+
     for (const auto& iqm_joint : data.joints) {
         skele.bone_parents.push_back(iqm_joint.parent);
 
@@ -76,6 +80,7 @@ auto load_skeleton(const iqm::iqm_data& data) -> skeleton {
         }
 
         skele.bone_mats.push_back(mat);
+        skele.bone_mats_inverse.push_back(glm::inverse(mat));
     }
 
     // Animations
@@ -99,9 +104,9 @@ auto load_skeleton(const iqm::iqm_data& data) -> skeleton {
         for (auto joint_index = 0u; joint_index < data.poses.size(); ++joint_index) {
             const auto& pose = data.poses[joint_index];
 
-            auto pose_pos = glm::vec3{};
-            auto pose_rot = glm::quat{};
-            auto pose_scl = glm::vec3{};
+            auto pose_pos = glm::vec3{0, 0, 0};
+            auto pose_rot = glm::quat{1, 0, 0, 0};
+            auto pose_scl = glm::vec3{1, 1, 1};
 
             auto assign_channel_value = [&](int channel, float value) {
                 switch (channel) {
@@ -129,18 +134,7 @@ auto load_skeleton(const iqm::iqm_data& data) -> skeleton {
                 assign_channel_value(i, value);
             }
 
-            auto mat = glm::mat4(1.f);
-            mat = glm::translate(mat, pose_pos);
-            mat = mat * glm::mat4_cast(glm::normalize(pose_rot));
-            mat = glm::scale(mat, pose_scl);
-
-            if (pose.parent >= 0) {
-                mat = skele.bone_mats[pose.parent] * mat;
-            }
-
-            mat = mat * glm::inverse(skele.bone_mats[joint_index]);
-
-            skele.frame_mats.push_back(mat);
+            skele.frame_transforms.push_back({ pose_pos, pose_rot, pose_scl });
         }
     }
 
@@ -158,9 +152,8 @@ auto get_animation_index(const skeleton& skele, const std::string& name) -> std:
     }
 }
 
-auto get_frame(const skeleton& skele, int anim_index, float time) -> std::span<const glm::mat4> {
-    auto& anim = skele.animations.at(anim_index);
-
+auto get_frame(const skeleton& skele, const skeleton::animation& anim, float time)
+    -> std::span<const skeleton::transform> {
     auto frame = int(time * anim.framerate);
 
     if (anim.loop) {
@@ -171,40 +164,63 @@ auto get_frame(const skeleton& skele, int anim_index, float time) -> std::span<c
 
     auto bones_per_frame = skele.bone_mats.size();
 
-    auto start = begin(skele.frame_mats) + bones_per_frame * (anim.first_frame + frame);
+    auto start = begin(skele.frame_transforms) + bones_per_frame * (anim.first_frame + frame);
 
     return { start, bones_per_frame };
 }
 
 auto blend_frames(
-    const skeleton& skele, std::span<const glm::mat4> from, std::span<const glm::mat4> to, float time)
-    -> std::vector<glm::mat4> {
+    const skeleton& skele,
+    std::span<const skeleton::transform> from,
+    std::span<const skeleton::transform> to,
+    float alpha) -> std::vector<glm::mat4> {
 
     auto out = std::vector<glm::mat4>{};
     out.reserve(from.size());
 
-    for (auto i = 0u; i < skele.bone_mats.size(); ++i) {
-        auto from_mat = from[i];
+    for (auto i = 0u; i < skele.bone_parents.size(); ++i) {
+        auto& parent = skele.bone_parents[i];
+        auto& from_transform = from[i];
+        auto& to_transform = to[i];
 
-        if (skele.bone_parents[i] >= 0) {
-            from_mat = out[skele.bone_parents[i]] * from_mat;
+        auto mat = glm::mat4(1.f);
+
+        if (alpha != 0.f) {
+            mat = glm::translate(mat, glm::mix(from_transform.pos, to_transform.pos, alpha));
+            mat = mat * glm::mat4_cast(glm::slerp(from_transform.rot, to_transform.rot, alpha));
+            mat = glm::scale(mat, glm::mix(from_transform.scl, to_transform.scl, alpha));
+        } else {
+            mat = glm::translate(mat, from_transform.pos);
+            mat = mat * glm::mat4_cast(from_transform.rot);
+            mat = glm::scale(mat, from_transform.scl);
         }
 
-        out.push_back(from_mat);
+        if (parent >= 0) {
+            mat = out[parent] * skele.bone_mats[parent] * mat * skele.bone_mats_inverse[i];
+        } else {
+            mat = mat * skele.bone_mats_inverse[i];
+        }
+
+        out.push_back(mat);
     }
 
     return out;
 }
 
-void draw_mesh(const mesh_group& group, const skeleton* skele, std::optional<int> anim_index, float time) {
+void draw_mesh(const mesh_group& group, const skeleton* skele, std::optional<int> anim_index, float time, bool smooth) {
     GLint program;
     glGetIntegerv(GL_CURRENT_PROGRAM, &program);
 
     auto animated_uniform = glGetUniformLocation(program, "Animated");
 
     if (skele && anim_index) {
-        auto frame_mats_prev = get_frame(*skele, *anim_index, time);
-        auto blended_frame_mats = blend_frames(*skele, frame_mats_prev, frame_mats_prev, time);
+        auto& anim = skele->animations.at(*anim_index);
+
+        auto frame_mats_prev = get_frame(*skele, anim, time);
+        auto frame_mats_next = get_frame(*skele, anim, time + 1.f / anim.framerate);
+
+        auto alpha = smooth ? time * anim.framerate - std::floor(time * anim.framerate) : 0.f;
+        auto blended_frame_mats = blend_frames(*skele, frame_mats_prev, frame_mats_next, alpha);
 
         auto bones_uniform = glGetUniformLocation(program, "Bones");
 
@@ -223,7 +239,7 @@ void draw_mesh(const mesh_group& group, const skeleton* skele, std::optional<int
 }
 
 void draw_mesh(const mesh_group& group) {
-    draw_mesh(group, nullptr, std::nullopt, 0.f);
+    draw_mesh(group, nullptr, std::nullopt, 0.f, false);
 }
 
 } // namespace sushi

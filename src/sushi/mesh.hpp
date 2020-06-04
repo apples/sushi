@@ -107,9 +107,16 @@ struct skeleton {
         bool loop;
     };
 
+    struct transform {
+        glm::vec3 pos;
+        glm::quat rot;
+        glm::vec3 scl;
+    };
+
     std::vector<int> bone_parents;
     std::vector<glm::mat4> bone_mats;
-    std::vector<glm::mat4> frame_mats;
+    std::vector<glm::mat4> bone_mats_inverse;
+    std::vector<transform> frame_transforms;
     std::vector<animation> animations;
 };
 
@@ -119,14 +126,18 @@ auto load_skeleton(const iqm::iqm_data& data) -> skeleton;
 
 auto get_animation_index(const skeleton& skele, const std::string& name) -> std::optional<int>;
 
-auto get_frame(const skeleton& skele, int anim_index, float time) -> std::span<const glm::mat4>;
+auto get_frame(const skeleton& skele, const skeleton::animation& anim, float time)
+    -> std::span<const skeleton::transform>;
 
-auto blend_frames(const skeleton& skele, std::span<const glm::mat4> from, std::span<const glm::mat4> to, float time)
-    -> std::vector<glm::mat4>;
+auto blend_frames(
+    const skeleton& skele,
+    std::span<const skeleton::transform> from,
+    std::span<const skeleton::transform> to,
+    float alpha) -> std::vector<glm::mat4>;
 
 /// Draws a mesh.
 /// \param mesh The mesh to draw.
-void draw_mesh(const mesh_group& group, const skeleton* skele, std::optional<int> anim_index, float time);
+void draw_mesh(const mesh_group& group, const skeleton* skele, std::optional<int> anim_index, float time, bool smooth);
 
 /// Draws a mesh.
 /// \param mesh The mesh to draw.

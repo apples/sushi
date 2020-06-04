@@ -65,6 +65,9 @@ struct window_data {
     bool a_pressed = false;
     bool a_released = false;
     bool a_down = false;
+    bool s_down = false;
+    bool space_pressed = false;
+    bool space_released = false;
 };
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -77,6 +80,18 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         if (key == GLFW_KEY_A && action == GLFW_RELEASE) {
             data->a_released= true;
             data->a_down = false;
+        }
+        if (key == GLFW_KEY_S && action == GLFW_PRESS) {
+            data->s_down = true;
+        }
+        if (key == GLFW_KEY_S && action == GLFW_RELEASE) {
+            data->s_down = false;
+        }
+        if (key == GLFW_KEY_SPACE && action == GLFW_PRESS) {
+            data->space_pressed = true;
+        }
+        if (key == GLFW_KEY_SPACE && action == GLFW_RELEASE) {
+            data->space_released = true;
         }
     }
 }
@@ -128,6 +143,8 @@ int main() try {
 
         data.a_pressed = false;
         data.a_released = false;
+        data.space_pressed = false;
+        data.space_released = false;
 
         glfwPollEvents();
 
@@ -137,6 +154,16 @@ int main() try {
 
         if (data.a_released) {
             clog << "A released." << endl;
+        }
+
+        if (data.space_pressed) {
+            player_anim = sushi::get_animation_index(player_skele, "Flip");
+            player_anim_time = 0.f;
+        }
+
+        if (data.space_released) {
+            player_anim = sushi::get_animation_index(player_skele, "Walk");
+            player_anim_time = 0.f;
         }
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -180,7 +207,7 @@ int main() try {
             program.set_DiffuseTexture(0);
             program.set_GrayScale(data.a_down);
             sushi::set_texture(0, player_tex);
-            sushi::draw_mesh(player_meshes, &player_skele, player_anim, player_anim_time);
+            sushi::draw_mesh(player_meshes, &player_skele, player_anim, player_anim_time, data.s_down);
             player_anim_time += delta;
         }
 
