@@ -74,7 +74,7 @@ auto load_obj_file(const std::string &fname) -> std::optional<mesh_group> {
                     .get();
             }
 
-            mb.tri(verts[0], verts[1], verts[2]);
+            mb.tri(verts[0], verts[2], verts[1]);
         } else if (word[0] == '#') {
             // pass
         } else {

@@ -114,6 +114,8 @@ int main() try {
     }
 
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glFrontFace(GL_CW);
 
     auto texture = sushi::load_texture_2d("assets/test.png", false, false, false, false);
     auto mesh = sushi::load_obj_file("assets/test.obj").value_or(sushi::mesh_group{});
