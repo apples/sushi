@@ -117,7 +117,7 @@ int main() try {
     glEnable(GL_DEPTH_TEST);
 
     auto texture = sushi::load_texture_2d("assets/test.png", false, false, false, false);
-    auto mesh = sushi::load_obj_file("assets/test.obj");
+    auto mesh = sushi::load_obj_file("assets/test.obj").value_or(sushi::mesh_group{});
     auto program = example_shader();
     auto xrot = 0.f;
     auto yrot = 0.f;

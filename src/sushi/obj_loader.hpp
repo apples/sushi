@@ -1,18 +1,10 @@
-//
-// Created by Jeramy on 7/22/2015.
-//
-
 #ifndef SUSHI_OBJ_LOADER_HPP
 #define SUSHI_OBJ_LOADER_HPP
 
-#include "gl.hpp"
-#include "common.hpp"
 #include "mesh.hpp"
 
 #include <string>
-#include <memory>
-#include <map>
-#include <vector>
+#include <optional>
 
 /// Sushi
 namespace sushi {
@@ -26,7 +18,7 @@ namespace sushi {
 /// - `f` - Face (triangles only).
 /// \param fname File name.
 /// \return The static mesh described by the file.
-auto load_obj_file(const std::string &fname) -> mesh_group;
+auto load_obj_file(const std::string &fname) -> std::optional<mesh_group>;
 
 } // namespace sushi
 

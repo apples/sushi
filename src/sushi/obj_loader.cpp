@@ -4,14 +4,19 @@
 
 #include <algorithm>
 #include <fstream>
-#include <vector>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 namespace sushi {
 
-auto load_obj_file(const std::string &fname) -> mesh_group {
+auto load_obj_file(const std::string &fname) -> std::optional<mesh_group> {
     std::ifstream file(fname);
+
+    if (!file) {
+        return std::nullopt;
+    }
+
     std::string line;
     std::string word;
     int line_number = 0;
@@ -73,7 +78,7 @@ auto load_obj_file(const std::string &fname) -> mesh_group {
         } else if (word[0] == '#') {
             // pass
         } else {
-            std::clog << "sushi::load_static_mesh_file(): Warning: Unknown OBJ directive at " << fname << "[" <<
+            std::clog << "sushi::load_obj_file(): Warning: Unknown OBJ directive at " << fname << "[" <<
             line_number
             << "]: \"" << word << "\"." << std::endl;
         }
