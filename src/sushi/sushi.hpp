@@ -6,6 +6,8 @@
 #define SUSHI_SUSHI_HPP
 
 #include "mesh.hpp"
+#include "mesh_builder.hpp"
+#include "obj_loader.hpp"
 #include "texture.hpp"
 #include "shader.hpp"
 #include "framebuffer.hpp"

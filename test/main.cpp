@@ -3,7 +3,6 @@
 
 #include <glad/glad.h>
 #include <sushi/sushi.hpp>
-#include <sushi/obj_loader.hpp>
 #include <GLFW/glfw3.h>
 
 #include <iostream>
