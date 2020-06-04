@@ -121,8 +121,7 @@ auto get_animation_index(const skeleton& skele, const std::string& name) -> std:
 
 auto get_frame(const skeleton& skele, int anim_index, float time) -> std::span<const glm::mat4>;
 
-auto blend_frames(
-    const skeleton& skele, int anim_index, std::span<const glm::mat4> from, std::span<const glm::mat4> to, float time)
+auto blend_frames(const skeleton& skele, std::span<const glm::mat4> from, std::span<const glm::mat4> to, float time)
     -> std::vector<glm::mat4>;
 
 /// Draws a mesh.

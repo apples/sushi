@@ -177,7 +177,7 @@ auto get_frame(const skeleton& skele, int anim_index, float time) -> std::span<c
 }
 
 auto blend_frames(
-    const skeleton& skele, int anim_index, std::span<const glm::mat4> from, std::span<const glm::mat4> to, float time)
+    const skeleton& skele, std::span<const glm::mat4> from, std::span<const glm::mat4> to, float time)
     -> std::vector<glm::mat4> {
 
     auto out = std::vector<glm::mat4>{};
@@ -202,20 +202,14 @@ void draw_mesh(const mesh_group& group, const skeleton* skele, std::optional<int
 
     auto animated_uniform = glGetUniformLocation(program, "Animated");
 
-    if (skele) {
-        auto frame_mats = [&] {
-            if (anim_index) {
-                auto mats = get_frame(*skele, *anim_index, time);
-                return blend_frames(*skele, *anim_index, mats, mats, time);
-            } else {
-                return skele->bone_mats;
-            }
-        }();
+    if (skele && anim_index) {
+        auto frame_mats_prev = get_frame(*skele, *anim_index, time);
+        auto blended_frame_mats = blend_frames(*skele, frame_mats_prev, frame_mats_prev, time);
 
         auto bones_uniform = glGetUniformLocation(program, "Bones");
 
         glUniform1i(animated_uniform, 1);
-        glUniformMatrix4fv(bones_uniform, frame_mats.size(), GL_FALSE, glm::value_ptr(frame_mats[0]));
+        glUniformMatrix4fv(bones_uniform, blended_frame_mats.size(), GL_FALSE, glm::value_ptr(blended_frame_mats[0]));
     } else {
         glUniform1i(animated_uniform, 0);
     }
