@@ -151,8 +151,7 @@ auto get_animation_index(const skeleton& skele, const std::string& name) -> std:
     }
 }
 
-auto get_frame(const skeleton& skele, const skeleton::animation& anim, float time)
-    -> std::span<const skeleton::transform> {
+auto get_frame(const skeleton& skele, const skeleton::animation& anim, float time) -> span<const skeleton::transform> {
     auto frame = int(time * anim.framerate);
 
     if (anim.loop) {
@@ -165,14 +164,12 @@ auto get_frame(const skeleton& skele, const skeleton::animation& anim, float tim
 
     auto start = begin(skele.frame_transforms) + bones_per_frame * (anim.first_frame + frame);
 
-    return { &*start, bones_per_frame };
+    return span(&*start, bones_per_frame);
 }
 
 auto blend_frames(
-    const skeleton& skele,
-    std::span<const skeleton::transform> from,
-    std::span<const skeleton::transform> to,
-    float alpha) -> std::vector<glm::mat4> {
+    const skeleton& skele, span<const skeleton::transform> from, span<const skeleton::transform> to, float alpha)
+    -> std::vector<glm::mat4> {
 
     auto out = std::vector<glm::mat4>{};
     out.reserve(from.size());

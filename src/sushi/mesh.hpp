@@ -14,7 +14,6 @@
 #include <memory>
 #include <map>
 #include <optional>
-#include <span>
 #include <variant>
 #include <vector>
 
@@ -117,14 +116,11 @@ auto load_skeleton(const iqm::iqm_data& data) -> skeleton;
 
 auto get_animation_index(const skeleton& skele, const std::string& name) -> std::optional<int>;
 
-auto get_frame(const skeleton& skele, const skeleton::animation& anim, float time)
-    -> std::span<const skeleton::transform>;
+auto get_frame(const skeleton& skele, const skeleton::animation& anim, float time) -> span<const skeleton::transform>;
 
 auto blend_frames(
-    const skeleton& skele,
-    std::span<const skeleton::transform> from,
-    std::span<const skeleton::transform> to,
-    float alpha) -> std::vector<glm::mat4>;
+    const skeleton& skele, span<const skeleton::transform> from, span<const skeleton::transform> to, float alpha)
+    -> std::vector<glm::mat4>;
 
 /// Draws a mesh.
 /// \param mesh The mesh to draw.

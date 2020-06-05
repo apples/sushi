@@ -80,6 +80,25 @@ public:
     const T& get() const { return *ptr; }
 };
 
+template <typename T>
+class span {
+public:
+    span() = default;
+    span(T* ptr, std::size_t len) : b(ptr), e(ptr + len) {}
+    span(T* b, T* e) : b(b), e(e) {}
+
+    T* begin() const { return b; }
+    T* end() const { return e; }
+
+    T& operator[](std::size_t i) const { return b[i]; }
+
+    std::size_t size() const { return e - b; }
+
+private:
+    T* b;
+    T* e;
+};
+
 }
 
 #endif //SUSHI_COMMON_HPP

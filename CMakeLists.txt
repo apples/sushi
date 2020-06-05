@@ -38,7 +38,7 @@ add_library(sushi
     src/sushi/framebuffer_cubemap.cpp src/sushi/framebuffer_cubemap.hpp
     src/sushi/frustum.cpp src/sushi/frustum.hpp
 )
-set_target_properties(sushi PROPERTIES CXX_STANDARD 20)
+set_target_properties(sushi PROPERTIES CXX_STANDARD 17)
 target_include_directories(sushi PUBLIC src/)
 target_link_libraries(sushi glm lodepng)
 
@@ -50,6 +50,6 @@ endif()
 if(SUSHI_BUILD_EXAMPLES)
     find_package(glfw3 REQUIRED)
     add_executable(sushi_test test/main.cpp)
-    set_target_properties(sushi_test PROPERTIES CXX_STANDARD 20)
+    set_target_properties(sushi_test PROPERTIES CXX_STANDARD 17)
     target_link_libraries(sushi_test sushi glfw)
 endif()
