@@ -15,8 +15,7 @@ namespace sushi {
 
 auto load_meshes(const iqm::iqm_data& data) -> mesh_group {
     using _detail::load_buffer;
-    using _detail::bind_attrib_float;
-    using _detail::bind_attrib_ubyte;
+    using _detail::bind_attrib;
 
     mesh_group group;
 
@@ -44,13 +43,13 @@ auto load_meshes(const iqm::iqm_data& data) -> mesh_group {
             &data.triangles[iqm_mesh.first_triangle],
             GL_STATIC_DRAW);
 
-        bind_attrib_float(attrib_location::POSITION, group.position_buffer, 3, iqm_mesh.first_vertex, {});
-        bind_attrib_float(attrib_location::TEXCOORD, group.texcoord_buffer, 2, iqm_mesh.first_vertex, {});
-        bind_attrib_float(attrib_location::NORMAL, group.normal_buffer, 3, iqm_mesh.first_vertex, {});
-        bind_attrib_float(attrib_location::TANGENT, group.tangent_buffer, 3, iqm_mesh.first_vertex, {});
-        bind_attrib_ubyte(attrib_location::BLENDINDICES, group.blendindices_buffer, 4, GL_FALSE, iqm_mesh.first_vertex, {});
-        bind_attrib_ubyte(attrib_location::BLENDWEIGHTS, group.blendweights_buffer, 4, GL_TRUE, iqm_mesh.first_vertex, {});
-        bind_attrib_ubyte(attrib_location::COLOR, group.color_buffer, 4, GL_TRUE, iqm_mesh.first_vertex, {255, 255, 255, 255});
+        bind_attrib(attrib_location::POSITION, group.position_buffer, 3, GL_FLOAT, false, iqm_mesh.first_vertex, {});
+        bind_attrib(attrib_location::TEXCOORD, group.texcoord_buffer, 2, GL_FLOAT, false,  iqm_mesh.first_vertex, {});
+        bind_attrib(attrib_location::NORMAL, group.normal_buffer, 3, GL_FLOAT, false,  iqm_mesh.first_vertex, {});
+        bind_attrib(attrib_location::TANGENT, group.tangent_buffer, 3, GL_FLOAT, false,  iqm_mesh.first_vertex, {});
+        bind_attrib(attrib_location::BLENDINDICES, group.blendindices_buffer, 4, GL_UNSIGNED_BYTE, GL_FALSE, iqm_mesh.first_vertex, {});
+        bind_attrib(attrib_location::BLENDWEIGHTS, group.blendweights_buffer, 4, GL_UNSIGNED_BYTE, GL_TRUE, iqm_mesh.first_vertex, {});
+        bind_attrib(attrib_location::COLOR, group.color_buffer, 4, GL_UNSIGNED_BYTE, GL_TRUE, iqm_mesh.first_vertex, {255, 255, 255, 255});
 
         group.meshes.push_back(std::move(mesh));
     }
@@ -166,7 +165,7 @@ auto get_frame(const skeleton& skele, const skeleton::animation& anim, float tim
 
     auto start = begin(skele.frame_transforms) + bones_per_frame * (anim.first_frame + frame);
 
-    return { start, bones_per_frame };
+    return { &*start, bones_per_frame };
 }
 
 auto blend_frames(

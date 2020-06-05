@@ -115,8 +115,7 @@ void mesh_group_builder::tri(GLuint a, GLuint b, GLuint c) {
 
 auto mesh_group_builder::get() const -> mesh_group {
     using _detail::load_buffer;
-    using _detail::bind_attrib_float;
-    using _detail::bind_attrib_ubyte;
+    using _detail::bind_attrib;
 
     mesh_group group;
 
@@ -145,13 +144,13 @@ auto mesh_group_builder::get() const -> mesh_group {
             my_mesh.elements.data(),
             GL_STATIC_DRAW);
 
-        bind_attrib_float(attrib_location::POSITION, group.position_buffer, 3, 0, {});
-        bind_attrib_float(attrib_location::TEXCOORD, group.texcoord_buffer, 2, 0, {});
-        bind_attrib_float(attrib_location::NORMAL, group.normal_buffer, 3, 0, {});
-        bind_attrib_float(attrib_location::TANGENT, group.tangent_buffer, 3, 0, {});
-        bind_attrib_ubyte(attrib_location::BLENDINDICES, group.blendindices_buffer, 4, GL_FALSE, 0, {});
-        bind_attrib_ubyte(attrib_location::BLENDWEIGHTS, group.blendweights_buffer, 4, GL_TRUE, 0, {});
-        bind_attrib_float(attrib_location::COLOR, group.color_buffer, 4, 0, {1.f, 1.f, 1.f, 1.f});
+        bind_attrib(attrib_location::POSITION, group.position_buffer, 3, GL_FLOAT, false, 0, {});
+        bind_attrib(attrib_location::TEXCOORD, group.texcoord_buffer, 2, GL_FLOAT, false, 0, {});
+        bind_attrib(attrib_location::NORMAL, group.normal_buffer, 3, GL_FLOAT, false, 0, {});
+        bind_attrib(attrib_location::TANGENT, group.tangent_buffer, 3, GL_FLOAT, false, 0, {});
+        bind_attrib(attrib_location::BLENDINDICES, group.blendindices_buffer, 4, GL_UNSIGNED_BYTE, GL_FALSE, 0, {});
+        bind_attrib(attrib_location::BLENDWEIGHTS, group.blendweights_buffer, 4, GL_UNSIGNED_BYTE, GL_TRUE, 0, {});
+        bind_attrib(attrib_location::COLOR, group.color_buffer, 4, GL_FLOAT, false, 0, {1.f, 1.f, 1.f, 1.f});
 
         group.meshes.push_back(std::move(mesh));
     }

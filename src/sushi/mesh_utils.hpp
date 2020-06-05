@@ -21,8 +21,14 @@ auto load_buffer(const std::vector<T>& arr) -> unique_buffer {
     }
 }
 
-inline void bind_attrib_float(
-    sushi::attrib_location loc, const unique_buffer& buf, GLint size, std::size_t offset, std::array<float, 4> init) {
+inline void bind_attrib(
+    sushi::attrib_location loc,
+    const unique_buffer& buf,
+    GLint size,
+    GLenum type,
+    GLboolean normalize,
+    std::size_t offset,
+    std::array<float, 4> init) {
 
     glVertexAttrib4fv(static_cast<GLuint>(loc), init.data());
 
@@ -32,33 +38,10 @@ inline void bind_attrib_float(
         glVertexAttribPointer(
             static_cast<GLuint>(loc),
             size,
-            GL_FLOAT,
-            GL_FALSE,
-            0,
-            reinterpret_cast<const void*>(offset * size * sizeof(GLfloat)));
-    }
-}
-
-inline void bind_attrib_ubyte(
-    sushi::attrib_location loc,
-    const unique_buffer& buf,
-    GLint size,
-    GLboolean normalize,
-    std::size_t offset,
-    std::array<std::uint8_t, 4> init) {
-
-    glVertexAttrib4ubv(static_cast<GLuint>(loc), init.data());
-
-    if (buf) {
-        glEnableVertexAttribArray(static_cast<GLuint>(loc));
-        glBindBuffer(GL_ARRAY_BUFFER, buf.get());
-        glVertexAttribPointer(
-            static_cast<GLuint>(loc),
-            size,
-            GL_UNSIGNED_BYTE,
+            type,
             normalize,
             0,
-            reinterpret_cast<const void*>(offset * size * sizeof(GLubyte)));
+            reinterpret_cast<const void*>(offset * size * sizeof(GLfloat)));
     }
 }
 
