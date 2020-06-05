@@ -23,6 +23,7 @@ endif()
 
 add_library(sushi
     src/sushi/sushi.hpp
+    src/sushi/attrib_location.hpp
     src/sushi/common.hpp
     src/sushi/gl.hpp
     src/sushi/gles_shim.hpp

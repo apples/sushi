@@ -1,10 +1,10 @@
 #version 410
 
-layout(location = 0) in vec3 VertexPosition;
-layout(location = 1) in vec2 VertexTexCoord;
-layout(location = 2) in vec3 VertexNormal;
-layout(location = 4) in vec3 VertexIndices;
-layout(location = 5) in vec3 VertexWeights;
+in vec3 VertexPosition;
+in vec2 VertexTexCoord;
+in vec3 VertexNormal;
+in vec4 VertexBlendIndices;
+in vec4 VertexBlendWeights;
 
 uniform mat4 MVP;
 uniform bool Animated;
@@ -18,9 +18,9 @@ void main() {
     vec4 pos = vec4(0,0,0,0);
 
 	if (Animated) {
-		for (int i=0; i<1; ++i) {
-			float weight = VertexWeights[i];
-			int bone_i = int(VertexIndices[i]);
+		for (int i=0; i<4; ++i) {
+			int bone_i = int(VertexBlendIndices[i]);
+			float weight = VertexBlendWeights[i];
 			mat4 fmat = Bones[bone_i];
 			vec4 p = fmat * vec4(VertexPosition, 1.0);
 			p = p * weight;

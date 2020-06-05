@@ -6,6 +6,7 @@
 #define SUSHI_MESH_HPP
 
 #include "gl.hpp"
+#include "attrib_location.hpp"
 #include "common.hpp"
 #include "iqm.hpp"
 
@@ -68,16 +69,6 @@ struct static_mesh {
     unique_buffer vertex_buffer;
     int num_triangles = 0;
     float bounding_sphere = 0;
-};
-
-enum class attrib_location : GLuint {
-    POSITION = 0,
-    TEXCOORD = 1,
-    NORMAL = 2,
-    TANGENT = 3,
-    BLENDINDICES = 4,
-    BLENDWEIGHTS = 5,
-    COLOR = 6,
 };
 
 struct mesh_group {

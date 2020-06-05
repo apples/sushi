@@ -4,6 +4,7 @@
 
 #include "shader.hpp"
 
+#include "attrib_location.hpp"
 #include "common.hpp"
 #include "gl.hpp"
 
@@ -68,6 +69,10 @@ unique_program link_program(const std::vector<unique_shader>& shaders) {
 
     for (const auto& shader : shaders) {
         glAttachShader(rv.get(), shader.get());
+    }
+
+    for (const auto& [loc, name] : attrib_names) {
+        glBindAttribLocation(rv.get(), static_cast<GLuint>(loc), name);
     }
 
     glLinkProgram(rv.get());

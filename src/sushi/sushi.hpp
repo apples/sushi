@@ -5,6 +5,7 @@
 #ifndef SUSHI_SUSHI_HPP
 #define SUSHI_SUSHI_HPP
 
+#include "attrib_location.hpp"
 #include "mesh.hpp"
 #include "mesh_builder.hpp"
 #include "obj_loader.hpp"
