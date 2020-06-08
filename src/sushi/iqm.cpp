@@ -14,6 +14,8 @@ namespace iqm {
 iqm_data load_iqm(const std::string& fname) {
     std::unique_ptr<std::FILE,int(*)(std::FILE*)> file (std::fopen(fname.c_str(), "rb"), &std::fclose);
 
+    constexpr bool swapYZ = true;
+
     auto next_u8 = [&]{
         std::uint8_t rv = 0;
         int c = std::fgetc(file.get());
@@ -149,16 +151,49 @@ iqm_data load_iqm(const std::string& fname) {
 
         switch (type) {
             case 0: // position
-                std::generate_n(std::back_inserter(rv.vertexarrays.position), num_vertexes * size, next_float);
+                if (swapYZ) {
+                    for (auto i = 0; i < num_vertexes; ++i) {
+                        auto x = next_float();
+                        auto y = -next_float();
+                        auto z = next_float();
+                        rv.vertexarrays.position.push_back(x);
+                        rv.vertexarrays.position.push_back(z);
+                        rv.vertexarrays.position.push_back(y);
+                    }
+                } else {
+                    std::generate_n(std::back_inserter(rv.vertexarrays.position), num_vertexes * size, next_float);
+                }
                 break;
             case 1: // texcoord
                 std::generate_n(std::back_inserter(rv.vertexarrays.texcoord), num_vertexes * size, next_float);
                 break;
             case 2: // normal
-                std::generate_n(std::back_inserter(rv.vertexarrays.normal), num_vertexes * size, next_float);
+                if (swapYZ) {
+                    for (auto i = 0; i < num_vertexes; ++i) {
+                        auto x = next_float();
+                        auto y = -next_float();
+                        auto z = next_float();
+                        rv.vertexarrays.normal.push_back(x);
+                        rv.vertexarrays.normal.push_back(z);
+                        rv.vertexarrays.normal.push_back(y);
+                    }
+                } else {
+                    std::generate_n(std::back_inserter(rv.vertexarrays.normal), num_vertexes * size, next_float);
+                }
                 break;
             case 3: // tangent
-                std::generate_n(std::back_inserter(rv.vertexarrays.tangent), num_vertexes * size, next_float);
+                if (swapYZ) {
+                    for (auto i = 0; i < num_vertexes; ++i) {
+                        auto x = next_float();
+                        auto y = -next_float();
+                        auto z = next_float();
+                        rv.vertexarrays.tangent.push_back(x);
+                        rv.vertexarrays.tangent.push_back(z);
+                        rv.vertexarrays.tangent.push_back(y);
+                    }
+                } else {
+                    std::generate_n(std::back_inserter(rv.vertexarrays.tangent), num_vertexes * size, next_float);
+                }
                 break;
             case 4: // blendindexes
                 std::generate_n(std::back_inserter(rv.vertexarrays.blendindexes), num_vertexes * size, next_u8);
@@ -188,9 +223,15 @@ iqm_data load_iqm(const std::string& fname) {
         joint j;
         j.name = get_name(next_u32());
         j.parent = next_int();
-        j.pos.x = next_float(); j.pos.y = next_float(); j.pos.z = next_float();
-        j.rot.x = next_float(); j.rot.y = next_float(); j.rot.z = next_float(); j.rot.w = next_float();
-        j.scl.x = next_float(); j.scl.y = next_float(); j.scl.z = next_float();
+        if (swapYZ) {
+            j.pos.x = next_float(); j.pos.z = next_float(); j.pos.y = next_float();
+            j.rot.x = next_float(); j.rot.z = next_float(); j.rot.y = next_float(); j.rot.w = -next_float();
+            j.scl.x = next_float(); j.scl.z = next_float(); j.scl.y = next_float();
+        } else {
+            j.pos.x = next_float(); j.pos.y = next_float(); j.pos.z = next_float();
+            j.rot.x = next_float(); j.rot.y = next_float(); j.rot.z = next_float(); j.rot.w = next_float();
+            j.scl.x = next_float(); j.scl.y = next_float(); j.scl.z = next_float();
+        }
         rv.joints.push_back(std::move(j));
     }
 
@@ -231,12 +272,21 @@ iqm_data load_iqm(const std::string& fname) {
     std::fseek(file.get(), ofs_bounds, SEEK_SET);
     for (auto i = 0u; i < num_frames; ++i) {
         bound b;
-        b.min.x = next_float();
-        b.min.y = next_float();
-        b.min.z = next_float();
-        b.max.x = next_float();
-        b.max.y = next_float();
-        b.max.z = next_float();
+        if (swapYZ) {
+            b.min.x = next_float();
+            b.min.z = next_float();
+            b.min.y = next_float();
+            b.max.x = next_float();
+            b.max.z = next_float();
+            b.max.y = next_float();
+        } else {
+            b.min.x = next_float();
+            b.min.y = next_float();
+            b.min.z = next_float();
+            b.max.x = next_float();
+            b.max.y = next_float();
+            b.max.z = next_float();
+        }
         b.xyradius = next_float();
         b.radius = next_float();
         rv.bounds.push_back(std::move(b));
