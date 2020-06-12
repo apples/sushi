@@ -14,7 +14,8 @@ namespace iqm {
 iqm_data load_iqm(const std::string& fname) {
     std::unique_ptr<std::FILE,int(*)(std::FILE*)> file (std::fopen(fname.c_str(), "rb"), &std::fclose);
 
-    constexpr bool swapYZ = true;
+    constexpr bool orient90X = true;
+    const auto rotfixer90X = glm::angleAxis(glm::radians(-90.f), glm::vec3{1, 0, 0});
 
     auto next_u8 = [&]{
         std::uint8_t rv = 0;
@@ -151,7 +152,7 @@ iqm_data load_iqm(const std::string& fname) {
 
         switch (type) {
             case 0: // position
-                if (swapYZ) {
+                if (orient90X) {
                     for (auto i = 0; i < num_vertexes; ++i) {
                         auto x = next_float();
                         auto y = -next_float();
@@ -168,7 +169,7 @@ iqm_data load_iqm(const std::string& fname) {
                 std::generate_n(std::back_inserter(rv.vertexarrays.texcoord), num_vertexes * size, next_float);
                 break;
             case 2: // normal
-                if (swapYZ) {
+                if (orient90X) {
                     for (auto i = 0; i < num_vertexes; ++i) {
                         auto x = next_float();
                         auto y = -next_float();
@@ -182,7 +183,7 @@ iqm_data load_iqm(const std::string& fname) {
                 }
                 break;
             case 3: // tangent
-                if (swapYZ) {
+                if (orient90X) {
                     for (auto i = 0; i < num_vertexes; ++i) {
                         auto x = next_float();
                         auto y = -next_float();
@@ -223,10 +224,11 @@ iqm_data load_iqm(const std::string& fname) {
         joint j;
         j.name = get_name(next_u32());
         j.parent = next_int();
-        if (swapYZ) {
-            j.pos.x = next_float(); j.pos.z = next_float(); j.pos.y = next_float();
-            j.rot.x = next_float(); j.rot.z = next_float(); j.rot.y = next_float(); j.rot.w = -next_float();
-            j.scl.x = next_float(); j.scl.z = next_float(); j.scl.y = next_float();
+        if (orient90X && j.parent == -1) {
+            j.pos.x = next_float(); j.pos.x = next_float(); j.pos.z = next_float();
+            j.rot.x = next_float(); j.rot.y = next_float(); j.rot.z = next_float(); j.rot.w = next_float();
+            j.rot = rotfixer90X * j.rot;
+            j.scl.x = next_float(); j.scl.y = next_float(); j.scl.z = next_float();
         } else {
             j.pos.x = next_float(); j.pos.y = next_float(); j.pos.z = next_float();
             j.rot.x = next_float(); j.rot.y = next_float(); j.rot.z = next_float(); j.rot.w = next_float();
@@ -272,7 +274,7 @@ iqm_data load_iqm(const std::string& fname) {
     std::fseek(file.get(), ofs_bounds, SEEK_SET);
     for (auto i = 0u; i < num_frames; ++i) {
         bound b;
-        if (swapYZ) {
+        if (orient90X) {
             b.min.x = next_float();
             b.min.z = next_float();
             b.min.y = next_float();

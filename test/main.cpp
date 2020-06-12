@@ -199,7 +199,6 @@ int main() try {
             auto model_mat = glm::mat4(1.f);
 
             model_mat = glm::translate(model_mat, glm::vec3{1, 0, 0});
-            model_mat = glm::rotate(model_mat, glm::radians(-90.f), glm::vec3{1, 0, 0});
 
             auto mvp = proj_mat * view_mat * model_mat;
 

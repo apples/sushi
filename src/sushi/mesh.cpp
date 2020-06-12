@@ -6,10 +6,11 @@
 
 #include "mesh_utils.hpp"
 
+#include <glm/gtx/transform.hpp>
+
 #include <algorithm>
 #include <fstream>
 #include <vector>
-#include <iostream>
 
 namespace sushi {
 
@@ -58,6 +59,9 @@ auto load_meshes(const iqm::iqm_data& data) -> mesh_group {
 }
 
 auto load_skeleton(const iqm::iqm_data& data) -> skeleton {
+    constexpr bool orient90X = true;
+    const auto rotfixer90X = glm::angleAxis(glm::radians(-90.f), glm::vec3{1, 0, 0});
+
     skeleton skele;
 
     // Bones
@@ -131,6 +135,10 @@ auto load_skeleton(const iqm::iqm_data& data) -> skeleton {
                 }
 
                 assign_channel_value(i, value);
+            }
+
+            if (orient90X && skele.bone_parents[joint_index] == -1) {
+                pose_rot = rotfixer90X * pose_rot;
             }
 
             skele.frame_transforms.push_back({ pose_pos, pose_rot, pose_scl });
