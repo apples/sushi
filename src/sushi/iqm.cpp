@@ -7,15 +7,21 @@
 #include <algorithm>
 #include <memory>
 #include <cstdio>
+#include <iostream>
 
 namespace sushi {
 namespace iqm {
 
-iqm_data load_iqm(const std::string& fname) {
-    std::unique_ptr<std::FILE,int(*)(std::FILE*)> file (std::fopen(fname.c_str(), "rb"), &std::fclose);
-
+std::optional<iqm_data> load_iqm(const std::string& fname) try {
     constexpr bool orient90X = true;
     const auto rotfixer90X = glm::angleAxis(glm::radians(-90.f), glm::vec3{1, 0, 0});
+
+    std::unique_ptr<std::FILE,int(*)(std::FILE*)> file (std::fopen(fname.c_str(), "rb"), &std::fclose);
+
+    if (!file) {
+        std::cerr << "sushi::iqm::load_iqm: Could not open file \"" << fname << "\".\n";
+        return std::nullopt;
+    }
 
     auto next_u8 = [&]{
         std::uint8_t rv = 0;
@@ -297,7 +303,11 @@ iqm_data load_iqm(const std::string& fname) {
     // ignore extensions
 
     return rv;
+} catch (const std::exception& e) {
+    std::cerr << "ERROR: sushi::iqm::load_iqm: " << e.what() << "\n";
+    return std::nullopt;
 }
+
 
 } // namespace iqm
 } // namespace sushi

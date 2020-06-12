@@ -11,6 +11,7 @@
 #include <string>
 #include <bitset>
 #include <cstdint>
+#include <optional>
 #include <vector>
 
 namespace sushi {
@@ -55,7 +56,7 @@ struct anim {
 struct bound {
     glm::vec3 min;
     glm::vec3 max;
-    float xyradius;
+    float xyradius; /** Actually XZ radius if Y and Z are swapped */
     float radius;
 };
 
@@ -84,7 +85,7 @@ struct iqm_data {
 /// See http://sauerbraten.org/iqm/ for details.
 /// \param fname Name of file.
 /// \return IQM data.
-iqm_data load_iqm(const std::string& fname);
+std::optional<iqm_data> load_iqm(const std::string& fname);
 
 } // namespace iqm
 } // namespace sushi

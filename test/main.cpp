@@ -124,8 +124,8 @@ int main() try {
     auto yrot = 0.f;
 
     auto player_iqm = sushi::iqm::load_iqm("assets/player.iqm");
-    auto player_meshes = sushi::load_meshes(player_iqm);
-    auto player_skele = sushi::load_skeleton(player_iqm);
+    auto player_meshes = sushi::load_meshes(*player_iqm);
+    auto player_skele = sushi::load_skeleton(*player_iqm);
     auto player_anim = sushi::get_animation_index(player_skele, "Walk");
     auto player_anim_time = 0.f;
     auto player_tex = sushi::load_texture_2d("assets/player.png", true, false, true, true);
