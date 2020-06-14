@@ -103,45 +103,47 @@ auto load_skeleton(const iqm::iqm_data& data) -> skeleton {
 
     auto current_frame_channel = 0u;
 
-    for (auto frame_index = 0u; frame_index < data.frames.size() / data.num_framechannels; ++frame_index) {
-        for (auto joint_index = 0u; joint_index < data.poses.size(); ++joint_index) {
-            const auto& pose = data.poses[joint_index];
+    if (!data.frames.empty() && data.num_framechannels > 0) {
+        for (auto frame_index = 0u; frame_index < data.frames.size() / data.num_framechannels; ++frame_index) {
+            for (auto joint_index = 0u; joint_index < data.poses.size(); ++joint_index) {
+                const auto& pose = data.poses[joint_index];
 
-            auto pose_pos = glm::vec3{0, 0, 0};
-            auto pose_rot = glm::quat{1, 0, 0, 0};
-            auto pose_scl = glm::vec3{1, 1, 1};
+                auto pose_pos = glm::vec3{0, 0, 0};
+                auto pose_rot = glm::quat{1, 0, 0, 0};
+                auto pose_scl = glm::vec3{1, 1, 1};
 
-            auto assign_channel_value = [&](int channel, float value) {
-                switch (channel) {
-                    case 0: pose_pos.x = value; break;
-                    case 1: pose_pos.y = value; break;
-                    case 2: pose_pos.z = value; break;
-                    case 3: pose_rot.x = value; break;
-                    case 4: pose_rot.y = value; break;
-                    case 5: pose_rot.z = value; break;
-                    case 6: pose_rot.w = value; break;
-                    case 7: pose_scl.x = value; break;
-                    case 8: pose_scl.y = value; break;
-                    case 9: pose_scl.z = value; break;
+                auto assign_channel_value = [&](int channel, float value) {
+                    switch (channel) {
+                        case 0: pose_pos.x = value; break;
+                        case 1: pose_pos.y = value; break;
+                        case 2: pose_pos.z = value; break;
+                        case 3: pose_rot.x = value; break;
+                        case 4: pose_rot.y = value; break;
+                        case 5: pose_rot.z = value; break;
+                        case 6: pose_rot.w = value; break;
+                        case 7: pose_scl.x = value; break;
+                        case 8: pose_scl.y = value; break;
+                        case 9: pose_scl.z = value; break;
+                    }
+                };
+
+                for (int i = 0; i < 10; ++i) {
+                    auto value = pose.offsets[i];
+
+                    if (pose.channels[i]) {
+                        value += data.frames[current_frame_channel] * pose.scales[i];
+                        ++current_frame_channel;
+                    }
+
+                    assign_channel_value(i, value);
                 }
-            };
 
-            for (int i = 0; i < 10; ++i) {
-                auto value = pose.offsets[i];
-
-                if (pose.channels[i]) {
-                    value += data.frames[current_frame_channel] * pose.scales[i];
-                    ++current_frame_channel;
+                if (orient90X && skele.bone_parents[joint_index] == -1) {
+                    pose_rot = rotfixer90X * pose_rot;
                 }
 
-                assign_channel_value(i, value);
+                skele.frame_transforms.push_back({ pose_pos, pose_rot, pose_scl });
             }
-
-            if (orient90X && skele.bone_parents[joint_index] == -1) {
-                pose_rot = rotfixer90X * pose_rot;
-            }
-
-            skele.frame_transforms.push_back({ pose_pos, pose_rot, pose_scl });
         }
     }
 

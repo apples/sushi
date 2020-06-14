@@ -140,6 +140,13 @@ inline void set_current_program_uniform(GLint location, const glm::mat4& mat) {
     glUniformMatrix4fv(location, 1, GL_FALSE, glm::value_ptr(mat));
 }
 
+/// Sets a mat4 uniform array of the current program.
+/// \param location Location of the uniform.
+/// \param mat Matrix.
+inline void set_current_program_uniform(GLint location, const glm::mat4* mats, std::size_t n) {
+    glUniformMatrix4fv(location, n, GL_FALSE, glm::value_ptr(mats[0]));
+}
+
 /// Sets a uniform in the shader program.
 /// \param program The shader program.
 /// \param name The name of the uniform.
