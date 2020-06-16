@@ -139,6 +139,7 @@ auto load_skeleton(const iqm::iqm_data& data) -> skeleton {
                 }
 
                 if (orient90X && skele.bone_parents[joint_index] == -1) {
+                    pose_pos = rotfixer90X * pose_pos;
                     pose_rot = rotfixer90X * pose_rot;
                 }
 
