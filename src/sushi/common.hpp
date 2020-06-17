@@ -94,10 +94,15 @@ public:
 
     std::size_t size() const { return e - b; }
 
+    bool empty() const { return b == e; }
+
 private:
     T* b;
     T* e;
 };
+
+template <typename... Ts> struct overload : public Ts... { using Ts::operator()...; };
+template <class... Ts> overload(Ts...) -> overload<Ts...>;
 
 }
 

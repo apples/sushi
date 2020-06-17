@@ -14,6 +14,113 @@
 
 namespace sushi {
 
+pose::pose(const skeleton& skele, span<const skeleton::transform> single) : skele(&skele), pose_data(single) {}
+pose::pose(const skeleton& skele, blended_pose_data blended) : skele(&skele), pose_data(std::move(blended)) {}
+
+void pose::set_uniform(GLint uniform_location) const {
+    std::visit(overload{
+        [&](const span<const skeleton::transform>& s) {
+            glm::mat4 mats[32];
+
+            auto sz = std::min(std::size_t{32}, s.size());
+
+            for (auto i = 0; i < sz; ++i) {
+                auto parent = skele->bones[i].parent;
+                auto& mat = mats[i];
+
+                mat = to_mat4(s[i]);
+
+                if (parent >= 0) {
+                    mat = mats[parent] * skele->bones[parent].base_pose * mat * skele->bones[i].base_pose_inverse;
+                } else {
+                    mat = mat * skele->bones[i].base_pose_inverse;
+                }
+            }
+
+            glUniformMatrix4fv(uniform_location, sz, GL_FALSE, glm::value_ptr(mats[0]));
+        },
+        [&](const blended_pose_data& b) {
+            glm::mat4 mats[32];
+
+            auto sz = std::min({std::size_t{32}, b.from.size(), b.to.size()});
+
+            for (auto i = 0; i < sz; ++i) {
+                auto parent = skele->bones[i].parent;
+                auto& mat = mats[i];
+
+                auto blended_transform = lerp(b.from[i], b.to[i], b.alpha);
+
+                mat = to_mat4(blended_transform);
+
+                if (parent >= 0) {
+                    mat = mats[parent] * skele->bones[parent].base_pose * mat * skele->bones[i].base_pose_inverse;
+                } else {
+                    mat = mat * skele->bones[i].base_pose_inverse;
+                }
+            }
+
+            glUniformMatrix4fv(uniform_location, sz, GL_FALSE, glm::value_ptr(mats[0]));
+        }
+    }, pose_data);
+}
+
+auto pose::get_bone_transform(int i) const -> glm::mat4 {
+    std::visit(overload{
+        [&](const span<const skeleton::transform>& s) -> glm::mat4 {
+            auto get_mat = [&](auto& get_mat, int i) -> glm::mat4 {
+                auto parent = skele->bones[i].parent;
+
+                auto mat = to_mat4(s[i]);
+
+                if (parent >= 0) {
+                    mat = get_mat(get_mat, parent) * skele->bones[parent].base_pose * mat * skele->bones[i].base_pose_inverse;
+                } else {
+                    mat = mat * skele->bones[i].base_pose_inverse;
+                }
+
+                return mat;
+            };
+
+            return get_mat(get_mat, i);
+        },
+        [&](const blended_pose_data& b) -> glm::mat4 {
+            auto get_mat = [&](auto& get_mat, int i) -> glm::mat4 {
+                auto parent = skele->bones[i].parent;
+
+                auto blended_transform = lerp(b.from[i], b.to[i], b.alpha);
+
+                auto mat = to_mat4(blended_transform);
+
+                if (parent >= 0) {
+                    mat = get_mat(get_mat, parent) * skele->bones[parent].base_pose * mat * skele->bones[i].base_pose_inverse;
+                } else {
+                    mat = mat * skele->bones[i].base_pose_inverse;
+                }
+
+                return mat;
+            };
+
+            return get_mat(get_mat, i);
+        }
+    }, pose_data);
+}
+
+auto to_mat4(const skeleton::transform& t) -> glm::mat4 {
+    auto m = glm::mat4(1.f);
+    m = glm::translate(m, t.pos);
+    m = m * glm::mat4_cast(t.rot);
+    m = glm::scale(m, t.scl);
+    return m;
+}
+
+auto lerp(const skeleton::transform& a, const skeleton::transform& b, float alpha) -> skeleton::transform {
+    return {
+        mix(a.pos, b.pos, alpha),
+        slerp(a.rot, b.rot, alpha),
+        mix(a.scl, b.scl, alpha),
+    };
+}
+
 auto load_meshes(const iqm::iqm_data& data) -> mesh_group {
     using _detail::load_buffer;
     using _detail::bind_attrib;
@@ -180,42 +287,6 @@ auto get_frame(const skeleton& skele, const skeleton::animation& anim, float tim
     return span(&*start, bones_per_frame);
 }
 
-auto blend_frames(
-    const skeleton& skele, span<const skeleton::transform> from, span<const skeleton::transform> to, float alpha)
-    -> std::vector<glm::mat4> {
-
-    auto out = std::vector<glm::mat4>{};
-    out.reserve(from.size());
-
-    for (auto i = 0u; i < skele.bones.size(); ++i) {
-        auto& parent = skele.bones[i].parent;
-        auto& from_transform = from[i];
-        auto& to_transform = to[i];
-
-        auto mat = glm::mat4(1.f);
-
-        if (alpha != 0.f) {
-            mat = glm::translate(mat, glm::mix(from_transform.pos, to_transform.pos, alpha));
-            mat = mat * glm::mat4_cast(glm::slerp(from_transform.rot, to_transform.rot, alpha));
-            mat = glm::scale(mat, glm::mix(from_transform.scl, to_transform.scl, alpha));
-        } else {
-            mat = glm::translate(mat, from_transform.pos);
-            mat = mat * glm::mat4_cast(from_transform.rot);
-            mat = glm::scale(mat, from_transform.scl);
-        }
-
-        if (parent >= 0) {
-            mat = out[parent] * skele.bones[parent].base_pose * mat * skele.bones[i].base_pose_inverse;
-        } else {
-            mat = mat * skele.bones[i].base_pose_inverse;
-        }
-
-        out.push_back(mat);
-    }
-
-    return out;
-}
-
 auto get_bone_index(const skeleton& skele, const std::string& name) -> std::optional<int> {
     for (auto i = 0; i < skele.bones.size(); ++i) {
         if (skele.bones[i].name == name) {
@@ -226,8 +297,7 @@ auto get_bone_index(const skeleton& skele, const std::string& name) -> std::opti
     return std::nullopt;
 }
 
-auto get_pose(const skeleton* skele, std::optional<int> anim_index, float time, bool smooth)
-    -> std::optional<std::vector<glm::mat4>> {
+auto get_pose(const skeleton* skele, std::optional<int> anim_index, float time, bool smooth) -> std::optional<pose> {
     if (!skele || !anim_index) {
         return std::nullopt;
     }
@@ -235,12 +305,35 @@ auto get_pose(const skeleton* skele, std::optional<int> anim_index, float time, 
     auto& anim = skele->animations.at(*anim_index);
 
     auto frame_mats_prev = get_frame(*skele, anim, time);
-    auto frame_mats_next = get_frame(*skele, anim, time + 1.f / anim.framerate);
 
-    auto alpha = smooth ? time * anim.framerate - std::floor(time * anim.framerate) : 0.f;
-    auto blended_frame_mats = blend_frames(*skele, frame_mats_prev, frame_mats_next, alpha);
+    if (smooth) {
+        auto frame_mats_next = get_frame(*skele, anim, time + 1.f / anim.framerate);
 
-    return blended_frame_mats;
+        auto alpha = time * anim.framerate - std::floor(time * anim.framerate);
+
+        return pose{*skele, pose::blended_pose_data{frame_mats_prev, frame_mats_next, alpha}};
+    } else {
+        return pose{*skele, frame_mats_prev};
+    }
+}
+
+void draw_mesh(const mesh_group& group, const pose& pose) {
+    GLint program;
+    glGetIntegerv(GL_CURRENT_PROGRAM, &program);
+
+    auto animated_uniform = glGetUniformLocation(program, "Animated");
+
+    auto bones_uniform = glGetUniformLocation(program, "Bones");
+
+    glUniform1i(animated_uniform, 1);
+    pose.set_uniform(bones_uniform);
+
+    SUSHI_DEFER { glBindVertexArray(0); };
+
+    for (const auto& mesh : group.meshes) {
+        glBindVertexArray(mesh.vao.get());
+        glDrawElements(GL_TRIANGLES, mesh.num_tris * 3, GL_UNSIGNED_INT, nullptr);
+    }
 }
 
 void draw_mesh(const mesh_group& group, const skeleton* skele, std::optional<int> anim_index, float time, bool smooth) {
@@ -255,7 +348,7 @@ void draw_mesh(const mesh_group& group, const skeleton* skele, std::optional<int
         auto bones_uniform = glGetUniformLocation(program, "Bones");
 
         glUniform1i(animated_uniform, 1);
-        glUniformMatrix4fv(bones_uniform, pose->size(), GL_FALSE, glm::value_ptr((*pose)[0]));
+        pose->set_uniform(bones_uniform);
     } else {
         glUniform1i(animated_uniform, 0);
     }
