@@ -1,7 +1,7 @@
 #ifndef SUSHI_OBJ_LOADER_HPP
 #define SUSHI_OBJ_LOADER_HPP
 
-#include "mesh.hpp"
+#include "mesh_group.hpp"
 
 #include <string>
 #include <optional>

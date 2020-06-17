@@ -2,6 +2,7 @@
 #define SUSHI_MESH_UTILS_HPP
 
 #include "gl.hpp"
+#include "attrib_location.hpp"
 
 #include <vector>
 

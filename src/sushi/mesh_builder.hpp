@@ -1,7 +1,8 @@
 #ifndef SUSHI_MESH_BUILDER_HPP
 #define SUSHI_MESH_BUILDER_HPP
 
-#include "mesh.hpp"
+#include "mesh_group.hpp"
+#include "attrib_location.hpp"
 
 #include <bitset>
 #include <string>

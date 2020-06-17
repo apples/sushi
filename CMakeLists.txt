@@ -29,7 +29,9 @@ add_library(sushi
     src/sushi/gles_shim.hpp
     src/sushi/texture.hpp src/sushi/texture.cpp
     src/sushi/mesh_utils.hpp
-    src/sushi/mesh.hpp src/sushi/mesh.cpp
+    src/sushi/mesh_group.hpp src/sushi/mesh_group.cpp
+    src/sushi/skeleton.hpp src/sushi/skeleton.cpp
+    src/sushi/pose.hpp src/sushi/pose.cpp
     src/sushi/mesh_builder.hpp src/sushi/mesh_builder.cpp
     src/sushi/obj_loader.hpp src/sushi/obj_loader.cpp
     src/sushi/shader.hpp src/sushi/shader.cpp
@@ -37,6 +39,7 @@ add_library(sushi
     src/sushi/framebuffer.cpp src/sushi/framebuffer.hpp
     src/sushi/framebuffer_cubemap.cpp src/sushi/framebuffer_cubemap.hpp
     src/sushi/frustum.cpp src/sushi/frustum.hpp
+    src/sushi/transform.cpp src/sushi/transform.hpp
 )
 set_target_properties(sushi PROPERTIES CXX_STANDARD 17)
 target_include_directories(sushi PUBLIC src/)
