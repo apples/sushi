@@ -4,6 +4,7 @@
 #include "gl.hpp"
 #include "attrib_location.hpp"
 
+#include <array>
 #include <vector>
 
 namespace sushi {
