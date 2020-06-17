@@ -98,14 +98,19 @@ struct skeleton {
     };
 
     struct transform {
-        glm::vec3 pos;
-        glm::quat rot;
-        glm::vec3 scl;
+        glm::vec3 pos = {0, 0, 0};
+        glm::quat rot = {1, 0, 0, 0};
+        glm::vec3 scl = {1, 1, 1};
     };
 
-    std::vector<int> bone_parents;
-    std::vector<glm::mat4> bone_mats;
-    std::vector<glm::mat4> bone_mats_inverse;
+    struct bone {
+        glm::mat4 base_pose;
+        glm::mat4 base_pose_inverse;
+        int parent;
+        std::string name;
+    };
+
+    std::vector<bone> bones;
     std::vector<transform> frame_transforms;
     std::vector<animation> animations;
 };
@@ -121,6 +126,11 @@ auto get_frame(const skeleton& skele, const skeleton::animation& anim, float tim
 auto blend_frames(
     const skeleton& skele, span<const skeleton::transform> from, span<const skeleton::transform> to, float alpha)
     -> std::vector<glm::mat4>;
+
+auto get_bone_index(const skeleton& skele, const std::string& name) -> std::optional<int>;
+
+auto get_pose(const skeleton* skele, std::optional<int> anim_index, float time, bool smooth)
+    -> std::optional<std::vector<glm::mat4>>;
 
 /// Draws a mesh.
 /// \param mesh The mesh to draw.
