@@ -6,95 +6,71 @@
 
 namespace sushi {
 
+namespace {
+
+template <typename T, typename U>
+auto compute_pose_matrix(const sushi::skeleton& skele, int i, T&& get_pose_mat, U&& get_parent_mat) {
+    auto parent = skele.bones[i].parent;
+
+    auto mat = to_mat4(get_pose_mat(i));
+
+    if (parent >= 0) {
+        mat = get_parent_mat(parent) * skele.bones[parent].base_pose * mat * skele.bones[i].base_pose_inverse;
+    } else {
+        mat = mat * skele.bones[i].base_pose_inverse;
+    }
+
+    return mat;
+}
+
+} // namespace
+
 pose::pose(const skeleton& skele, span<const transform> single) : skele(&skele), pose_data(single) {}
 pose::pose(const skeleton& skele, blended_pose_data blended) : skele(&skele), pose_data(blended) {}
 
 void pose::set_uniform(GLint uniform_location) const {
-    std::visit(overload{
-        [&](const span<const transform>& s) {
-            glm::mat4 mats[32];
+    auto impl = [&](auto size, const auto& get_pose_mat) {
+        glm::mat4 mats[32];
+        
+        auto get_parent_mat = [&](int p) { return mats[p]; };
 
-            auto sz = std::min(std::size_t{32}, s.size());
+        auto sz = std::min(std::size_t{32}, size);
 
-            for (auto i = 0; i < sz; ++i) {
-                auto parent = skele->bones[i].parent;
-                auto& mat = mats[i];
-
-                mat = to_mat4(s[i]);
-
-                if (parent >= 0) {
-                    mat = mats[parent] * skele->bones[parent].base_pose * mat * skele->bones[i].base_pose_inverse;
-                } else {
-                    mat = mat * skele->bones[i].base_pose_inverse;
-                }
-            }
-
-            glUniformMatrix4fv(uniform_location, sz, GL_FALSE, glm::value_ptr(mats[0]));
-        },
-        [&](const blended_pose_data& b) {
-            glm::mat4 mats[32];
-
-            auto sz = std::min({std::size_t{32}, b.from.size(), b.to.size()});
-
-            for (auto i = 0; i < sz; ++i) {
-                auto parent = skele->bones[i].parent;
-                auto& mat = mats[i];
-
-                auto blended_transform = mix(b.from[i], b.to[i], b.alpha);
-
-                mat = to_mat4(blended_transform);
-
-                if (parent >= 0) {
-                    mat = mats[parent] * skele->bones[parent].base_pose * mat * skele->bones[i].base_pose_inverse;
-                } else {
-                    mat = mat * skele->bones[i].base_pose_inverse;
-                }
-            }
-
-            glUniformMatrix4fv(uniform_location, sz, GL_FALSE, glm::value_ptr(mats[0]));
+        for (auto i = 0; i < sz; ++i) {
+            mats[i] = compute_pose_matrix(*skele, i, get_pose_mat, get_parent_mat);
         }
-    }, pose_data);
+
+        glUniformMatrix4fv(uniform_location, sz, GL_FALSE, glm::value_ptr(mats[0]));
+    };
+
+    std::visit(
+        overload{
+            [&](const span<const transform>& s) { impl(s.size(), [&](int i) { return s[i]; }); },
+            [&](const blended_pose_data& b) {
+                auto sz = std::min(b.from.size(), b.to.size());
+                impl(sz, [&](int i) { return mix(b.from[i], b.to[i], b.alpha); });
+            },
+        },
+        pose_data);
 }
 
 auto pose::get_bone_transform(int i) const -> glm::mat4 {
-    return std::visit(overload{
-        [&](const span<const transform>& s) -> glm::mat4 {
-            auto get_mat = [&](auto& get_mat, int i) -> glm::mat4 {
-                auto parent = skele->bones[i].parent;
+    auto impl = [&](const auto& get_pose_mat) {
+        auto get_mat = [&](const auto& get_mat, int i) -> glm::mat4 {
+            auto get_parent_mat = [&](int p) { return get_mat(get_mat, p); };
 
-                auto mat = to_mat4(s[i]);
+            return compute_pose_matrix(*skele, i, get_pose_mat, get_parent_mat);
+        };
 
-                if (parent >= 0) {
-                    mat = get_mat(get_mat, parent) * skele->bones[parent].base_pose * mat * skele->bones[i].base_pose_inverse;
-                } else {
-                    mat = mat * skele->bones[i].base_pose_inverse;
-                }
+        return get_mat(get_mat, i);
+    };
 
-                return mat;
-            };
-
-            return get_mat(get_mat, i);
+    return std::visit(
+        overload{
+            [&](const span<const transform>& s) { return impl([&](int i) { return s[i]; }); },
+            [&](const blended_pose_data& b) { return impl([&](int i) { return mix(b.from[i], b.to[i], b.alpha); }); },
         },
-        [&](const blended_pose_data& b) -> glm::mat4 {
-            auto get_mat = [&](auto& get_mat, int i) -> glm::mat4 {
-                auto parent = skele->bones[i].parent;
-
-                auto blended_transform = mix(b.from[i], b.to[i], b.alpha);
-
-                auto mat = to_mat4(blended_transform);
-
-                if (parent >= 0) {
-                    mat = get_mat(get_mat, parent) * skele->bones[parent].base_pose * mat * skele->bones[i].base_pose_inverse;
-                } else {
-                    mat = mat * skele->bones[i].base_pose_inverse;
-                }
-
-                return mat;
-            };
-
-            return get_mat(get_mat, i);
-        }
-    }, pose_data);
+        pose_data);
 }
 
 auto get_pose(const skeleton* skele, std::optional<int> anim_index, float time, bool smooth) -> std::optional<pose> {
