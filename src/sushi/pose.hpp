@@ -17,13 +17,16 @@ namespace sushi {
 
 class pose {
 public:
+    struct nullpose {};
+
     struct blended_pose_data {
         span<const transform> from;
         span<const transform> to;
         float alpha;
     };
 
-    pose() = default;
+    pose() = delete;
+    pose(const skeleton& skele);
     pose(const skeleton& skele, span<const transform> single);
     pose(const skeleton& skele, blended_pose_data blended);
 
@@ -32,11 +35,17 @@ public:
     auto get_bone_transform(int i) const -> glm::mat4;
 
 private:
-    const skeleton* skele = nullptr;
-    std::variant<span<const transform>, blended_pose_data> pose_data;
+    enum pose_type {
+        NULLPOSE,
+        SINGLE,
+        BLENDED,
+    };
+
+    const skeleton* skele; /** Never null. */
+    std::variant<nullpose, span<const transform>, blended_pose_data> pose_data;
 };
 
-auto get_pose(const skeleton* skele, std::optional<int> anim_index, float time, bool smooth) -> std::optional<pose>;
+auto get_pose(const skeleton& skele, std::optional<int> anim_index, float time, bool smooth) -> pose;
 
 void draw_mesh(const mesh_group& group, const pose& pose);
 

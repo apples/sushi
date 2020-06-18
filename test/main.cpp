@@ -207,12 +207,8 @@ int main() try {
             program.set_DiffuseTexture(0);
             program.set_GrayScale(data.a_down);
             sushi::set_texture(0, player_tex);
-            auto pose = sushi::get_pose(&player_skele, player_anim, player_anim_time, data.s_down);
-            if (pose) {
-                sushi::draw_mesh(player_meshes, *pose);
-            } else {
-                sushi::draw_mesh(player_meshes);
-            }
+            auto pose = sushi::get_pose(player_skele, player_anim, player_anim_time, data.s_down);
+            sushi::draw_mesh(player_meshes, pose);
             player_anim_time += delta;
         }
 
