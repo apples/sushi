@@ -65,12 +65,14 @@ auto pose::get_bone_transform(int i) const -> glm::mat4 {
         return get_mat(get_mat, i);
     };
 
-    return std::visit(
+    auto from_bind_pose = std::visit(
         overload{
             [&](const span<const transform>& s) { return impl([&](int i) { return s[i]; }); },
             [&](const blended_pose_data& b) { return impl([&](int i) { return mix(b.from[i], b.to[i], b.alpha); }); },
         },
         pose_data);
+    
+    return from_bind_pose * skele->bones[i].base_pose;
 }
 
 auto get_pose(const skeleton* skele, std::optional<int> anim_index, float time, bool smooth) -> std::optional<pose> {
