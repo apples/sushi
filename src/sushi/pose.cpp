@@ -100,6 +100,8 @@ auto pose::get_bone_transform(int i) const -> glm::mat4 {
 
             return get_mat(get_mat, i);
         }
+        default:
+            return glm::mat4(1.f);
     }
 }
 
@@ -133,8 +135,6 @@ void draw_mesh(const mesh_group& group, const pose& pose) {
 
     glUniform1i(animated_uniform, 1);
     pose.set_uniform(bones_uniform);
-
-    SUSHI_DEFER { glBindVertexArray(0); };
 
     for (const auto& mesh : group.meshes) {
         glBindVertexArray(mesh.vao.get());
