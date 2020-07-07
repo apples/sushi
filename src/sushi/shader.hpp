@@ -133,6 +133,13 @@ inline void set_current_program_uniform(GLint location, const glm::vec4& vec) {
     glUniform4fv(location, 1, glm::value_ptr(vec));
 }
 
+/// Sets a mat3 uniform of the current program.
+/// \param location Location of the uniform.
+/// \param mat Matrix.
+inline void set_current_program_uniform(GLint location, const glm::mat3& mat) {
+    glUniformMatrix3fv(location, 1, GL_FALSE, glm::value_ptr(mat));
+}
+
 /// Sets a mat4 uniform of the current program.
 /// \param location Location of the uniform.
 /// \param mat Matrix.
