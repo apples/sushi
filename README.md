@@ -152,7 +152,7 @@ Meshes can be generated using `sushi::mesh_builder`.
 Note that a `sushi::mesh_group` can contain multiple meshes.
 
 ```cpp
-auto mb = sushi::mesh_builder();
+auto mb = sushi::mesh_group_builder();
 mb.enable(sushi::attrib_location::POSITION);
 mb.enable(sushi::attrib_location::TEXCOORD);
 
