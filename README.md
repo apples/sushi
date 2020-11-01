@@ -148,7 +148,7 @@ Currently, Sushi does not have helper methods for initializing textures, since t
 You can create an uninitialized texture using `sushi::create_uninitialized_texture_2d`,
 and then access the texture ID via the `.model` field.
 
-Meshes can be generated using `sushi::mesh_builder`.
+Meshes can be generated using `sushi::mesh_group_builder`.
 Note that a `sushi::mesh_group` can contain multiple meshes.
 
 ```cpp
