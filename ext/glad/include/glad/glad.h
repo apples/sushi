@@ -13,6 +13,9 @@
 #define WIN32_LEAN_AND_MEAN 1
 #endif
 #include <windows.h>
+#undef INFINITE
+#undef near
+#undef far
 #endif
 
 #ifndef APIENTRY
